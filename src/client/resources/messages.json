@@ -1,0 +1,125 @@
+{
+  "mod.info": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Mod LT-Rynek by LordTricker",
+    "&8- &fMoj GitHub&8: &3https://github.com/LordTricker/LT-Rynek",
+    "&8- &fChcesz wesprzec? &3https://tipply.pl/@lordtricker",
+    " ",
+    " &6| &eConfig zostal wygenerowany w miejscu:",
+    " &6| &e%appdata%/.minecraft/config/&6ltrynek-profiles.json",
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
+    " "
+  ],
+  "command.defaultprofile.success": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Domyslny profil ustawiony na: &f%profile%",
+    " "
+  ],
+  "command.profiles.list": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Dostepne profile:"
+  ],
+  "command.profile.change": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Twoj aktywny profil zostal zmieniony na: &f%profile%",
+    " "
+  ],
+  "command.add.success": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Dodano &f%item% &7z maksymalna cena &a%price% &7do profilu &f%profile%",
+    " "
+  ],
+  "command.remove.success": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Usunieto &f%item% &7z profilu &f%profile%",
+    " "
+  ],
+  "command.list": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Przedmioty dla profilu &f%profile%:"
+  ],
+  "command.help": [
+    "&8[&3L&bT &fRynek&8] &7Mod LT-Rynek by LordTricker",
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Dostepne komendy:",
+    "&8- &f/ltr &8- &7Informacje o modzie i aktywnym profilu",
+    "&8- &f/ltr profiles &8- &7Wyswietla dostepne profile",
+    "&8- &f/ltr add <maxCena> <przedmiot> &8- &7Dodaje przedmiot do profilu",
+    "&8- &f/ltr remove <przedmiot> &8- &7Usuwa przedmiot z profilu",
+    "&8- &f/ltr list &8- &7Wyswietla przedmioty profilu",
+    "&8- &f/ltr pomoc &8- &7Lista komend",
+    "&8- &f/ltr config save &8- &7Zapisuje wszystko do configu",
+    "&8- &f/ltr config reload &8- &7Przeladowuje dane z configu",
+    " ",
+    "&8[&3L&bT &fRynek&8] &aCtrl &f+ &aR &8- &7Aby wlaczyc szukanie",
+    " ",
+    " &6| &eConfig zostal wygenerowany w miejscu:",
+    " &6| &e%appdata%/.minecraft/config/&6ltrynek-profiles.json",
+    " "
+  ],
+  "player.join": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &fWitaj na serwerze!",
+    "&8[&3L&bT &fRynek&8] &fLT-Rynek Mod &7jest &aaktywny.",
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
+    " "
+  ],
+  "pricelist.no_data": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &cBrak danych dla profilu &f%profile%",
+    " "
+  ],
+  "pricelist.no_items": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &cBrak przedmiotow w profilu &f%profile%",
+    " "
+  ],
+  "pricelist.icon.edit": [
+    "&8[&eEdytuj&8]"
+  ],
+  "pricelist.icon.remove": [
+    "&8[&cUsun&8]"
+  ],
+  "pricelist.item_line": [
+    "&8- &f%item%&8: &a%price%"
+  ],
+  "profile.set": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Ustawiono profil: &f%profile%",
+    " "
+  ],
+  "command.profiles.header": [
+    " ",
+    "&8[&3&lL&b&lT &fRynek&8] &7Dostepne profile:",
+    " "
+  ],
+  "profile.available.line": [
+    "&8- &f%profile%"
+  ],
+  "command.list.header": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Przedmioty dla profilu &f%profile%:"
+  ],
+  "command.config.save.success": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &aKonfiguracja zostala zapisana.",
+    " "
+  ],
+  "command.config.reload.success": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &aKonfiguracja zostala przeladowana.",
+    " "
+  ],
+  "command.scanner.toggle.on": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Skanowanie przedmiotow &awlaczone.",
+    " "
+  ],
+  "command.scanner.toggle.off": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Skanowanie przedmiotow &cwylaczone.",
+    " "
+  ]
+}
