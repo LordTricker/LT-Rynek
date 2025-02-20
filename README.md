@@ -12,7 +12,7 @@
 - Automatycznie generowany plik konfiguracyjny dla profili użytkownika.
 
 ## 🛠️ Dostępne wersje
-- 🟢 1.19.2 - [Pobierz](https://github.com/LordTricker/LT-Rynek/Releases)
+- 🟢 1.19.2 - [Pobierz](https://github.com/LordTricker/LT-Rynek/tree/1.19.2/Releases)
 - 🔴 1.21.1 - Wkrótce
 
 ## 📜 Komendy
@@ -28,7 +28,7 @@
 | `/ltr config reload` | Przeładowuje dane z konfiguracji |
 
 ## 🔧 Instalacja
-1. Pobierz najnowszą wersję moda z [GitHuba](https://github.com/LordTricker/LT-Rynek/Releases).
+1. Pobierz najnowszą wersję moda z [GitHuba](https://github.com/LordTricker/LT-Rynek/).
 2. Umieść plik `.jar` w katalogu `mods` w folderze Minecrafta.
 3. Uruchom grę i ciesz się nowymi funkcjami!
 
