@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "com.example.mixin.client",
-	"compatibilityLevel": "JAVA_21",
+	"package": "com.example.ltrynek.client.mixin",
+	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"ExampleClientMixin"
+		"HandledScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

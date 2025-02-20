@@ -1,25 +1,23 @@
 {
 	"schemaVersion": 1,
-	"id": "modid",
+	"id": "ltrynek",
 	"version": "${version}",
-	"name": "Example mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "LT-Rynek",
+	"description": "Amatorska modyfikacja ułatwiająca działania rynkowe na różnych serwerach. Jeżeli powielasz, to miłoby było jakbyś podzielił się info na kim bazujesz <3.",
 	"authors": [
-		"Me!"
+		"LordTricker & Mr. GPT"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://blazecode.pl/",
+		"sources": "https://github.com/LordTricker"
 	},
 	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
+	"icon": "assets/ltrynek/icon.png",
+
 	"environment": "*",
 	"entrypoints": {
-		"main": [
-			"com.example.ExampleMod"
-		],
 		"client": [
-			"com.example.ExampleModClient"
+			"com.example.ltrynek.client.LtrynekClient"
 		]
 	},
 	"mixins": [
@@ -29,10 +27,11 @@
 			"environment": "client"
 		}
 	],
+
 	"depends": {
-		"fabricloader": ">=0.16.10",
-		"minecraft": "~1.21.4",
-		"java": ">=21",
+		"fabricloader": ">=0.14.21",
+		"minecraft": "~1.19.2",
+		"java": ">=17",
 		"fabric-api": "*"
 	},
 	"suggests": {
