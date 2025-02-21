@@ -1,5 +1,6 @@
 package pl.lordtricker.ltrynek.client.mixin;
 
+import net.minecraft.registry.Registries;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
@@ -14,7 +15,6 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -89,7 +89,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		}
 		if (foundPrice < 0) return;
 
-		Identifier id = Registry.ITEM.getId(stack.getItem());
+		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
 		String displayName = stack.getName().getString();
 		String noColorName = ColorStripUtils.stripAllColorsAndFormats(displayName);
