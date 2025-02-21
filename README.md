@@ -55,6 +55,7 @@ W pliku można ręcznie edytować profile i ich zawartość.
 - Strona domowa: [BlazeCode](https://blazecode.pl/)
 - Repozytorium: [GitHub](https://github.com/LordTricker)
 - Wesprzyj autora: [Tipply](https://tipply.pl/@lordtricker)
+- Mój discord: LordTricker
 
 🎉 **Dziękujemy za korzystanie z LT-Rynek!**
 
