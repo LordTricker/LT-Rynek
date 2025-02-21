@@ -12,6 +12,7 @@
 - Automatycznie generowany plik konfiguracyjny dla profili użytkownika.
 
 ## 🛠️ Dostępne wersje
+- 🟢 1.18.2 - [Pobierz](https://github.com/LordTricker/LT-Rynek/tree/1.19.2/Releases)
 - 🟢 1.19.2 - [Pobierz](https://github.com/LordTricker/LT-Rynek/tree/1.19.2/Releases)
 - 🔴 1.21.1 - Wkrótce
 

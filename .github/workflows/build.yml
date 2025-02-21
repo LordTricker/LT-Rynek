@@ -4,7 +4,14 @@
 # against bad commits.
 
 name: build
-on: [pull_request, push]
+on:
+  pull_request:
+    branches: ["ver/*"]
+  push:
+    branches: ["ver/*"]
+
+env:
+  BRANCH_NAME: ${{ github.head_ref || github.ref_name }}
 
 jobs:
   build:
@@ -28,3 +35,12 @@ jobs:
         with:
           name: Artifacts
           path: build/libs/
+      - name: Release
+        if: github.event_name != 'pull_request'
+        uses: marvinpinto/action-automatic-releases@master
+        with:
+          title: "LT-Rynek ${{ env.BRANCH_NAME }}"
+          automatic_release_tag: "${{ env.BRANCH_NAME }}"
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          files: "./build/libs"
+          prerelease: false
