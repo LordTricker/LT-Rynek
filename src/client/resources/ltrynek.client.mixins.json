@@ -1,0 +1,16 @@
+{
+	"required": true,
+	"package": "pl.lordtricker.ltrynek.client.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"HandledScreenMixin",
+		"ScreenHandlerAccessor"
+	],
+	"client": [
+		"HandledScreenMixin",
+		"ScreenHandlerAccessor"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
+}

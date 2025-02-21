@@ -1,4 +1,4 @@
-package com.example.ltrynek.client;
+package pl.lordtricker.ltrynek.client;
 
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;

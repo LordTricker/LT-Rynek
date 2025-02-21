@@ -1,4 +1,4 @@
-package com.example.ltrynek.client.config;
+package pl.lordtricker.ltrynek.client.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
