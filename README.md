@@ -23,7 +23,6 @@ Dostępnę Releasy: https://github.com/LordTricker/LT-Rynek/releases
 
 🔷 - Te wersje będą miały najnowsze updaty
 
-
 ## 📜 Komendy
 | Komenda | Opis |
 |---------|------|
