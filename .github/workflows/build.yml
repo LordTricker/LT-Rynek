@@ -42,5 +42,5 @@ jobs:
           title: "LT-Rynek ${{ env.BRANCH_NAME }}"
           automatic_release_tag: "${{ env.BRANCH_NAME }}"
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          files: "./build/libs"
+          files: "./build/libs/*.jar"
           prerelease: false
