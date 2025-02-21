@@ -107,8 +107,8 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			double ratio = finalPrice / maxPrice;
 			if (ratio > 1.0) ratio = 1.0;
 			double alphaF = 1.0 - 0.75 * ratio;
-			if (alphaF < 0.25) {
-				alphaF = 0.25;
+			if (alphaF < 0.50) {
+				alphaF = 0.50;
 			}
 			int computedAlpha = (int)(alphaF * 255.0) & 0xFF;
 			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF)

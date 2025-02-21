@@ -13,13 +13,19 @@ public class ToggleScanner {
 
     public static void init() {
         toggleScanningKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.ltrynek.toggle_scanning",
+                "key.ltxb.toggle_scanning",
                 GLFW.GLFW_KEY_R,
-                "category.ltrynek"
+                "category.ltxb"
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             while (toggleScanningKey.wasPressed()) {
+                long window = client.getWindow().getHandle();
+                boolean ctrlPressed = GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS ||
+                        GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
+                if (!ctrlPressed) {
+                    continue;
+                }
                 scanningEnabled = !scanningEnabled;
                 String msgKey = scanningEnabled ? "command.scanner.toggle.on" : "command.scanner.toggle.off";
                 String msg = Messages.get(msgKey);
