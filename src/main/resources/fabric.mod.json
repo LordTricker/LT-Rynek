@@ -11,7 +11,7 @@
 		"homepage": "https://blazecode.pl/",
 		"sources": "https://github.com/LordTricker"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/ltrynek/icon.png",
 
 	"environment": "*",
