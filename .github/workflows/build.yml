@@ -30,11 +30,15 @@ jobs:
         run: chmod +x ./gradlew
       - name: build
         run: ./gradlew build
+      - name: rename
+        run: |
+          rm build/libs/*-sources.jar
+          mv build/libs/*.jar ./
       - name: capture build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
-          path: build/libs/
+          path: ./*.jar
       - name: Release
         if: github.event_name != 'pull_request'
         uses: marvinpinto/action-automatic-releases@master
@@ -42,5 +46,5 @@ jobs:
           title: "LT-Rynek ${{ env.BRANCH_NAME }}"
           automatic_release_tag: "${{ env.BRANCH_NAME }}"
           repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          files: "./build/libs/*.jar"
+          files: "*.jar"
           prerelease: false
