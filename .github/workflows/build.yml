@@ -19,26 +19,34 @@ jobs:
     steps:
       - name: checkout repository
         uses: actions/checkout@v4
+
       - name: validate gradle wrapper
         uses: gradle/actions/wrapper-validation@v4
+
       - name: setup jdk
         uses: actions/setup-java@v4
         with:
           java-version: '21'
           distribution: 'microsoft'
+          cache: gradle
+
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
+
       - name: build
         run: ./gradlew build
+
       - name: rename
         run: |
           rm build/libs/*-sources.jar
           mv build/libs/*.jar ./
+
       - name: capture build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Artifacts
           path: ./*.jar
+
       - name: Release
         if: github.event_name != 'pull_request'
         uses: marvinpinto/action-automatic-releases@master
