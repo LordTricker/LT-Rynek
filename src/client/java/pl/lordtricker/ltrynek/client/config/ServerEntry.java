@@ -1,4 +1,4 @@
-package com.example.ltrynek.client.config;
+package pl.lordtricker.ltrynek.client.config;
 
 import java.util.List;
 import java.util.ArrayList;

@@ -11,19 +11,18 @@
 		"homepage": "https://blazecode.pl/",
 		"sources": "https://github.com/LordTricker"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/ltrynek/icon.png",
 
 	"environment": "*",
 	"entrypoints": {
 		"client": [
-			"com.example.ltrynek.client.LtrynekClient"
+			"pl.lordtricker.ltrynek.client.LtrynekClient"
 		]
 	},
 	"mixins": [
-		"modid.mixins.json",
 		{
-			"config": "modid.client.mixins.json",
+			"config": "ltrynek.client.mixins.json",
 			"environment": "client"
 		}
 	],

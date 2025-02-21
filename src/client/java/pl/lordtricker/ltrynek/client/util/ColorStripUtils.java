@@ -1,4 +1,4 @@
-package com.example.ltrynek.client.util;
+package pl.lordtricker.ltrynek.client.util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -10,7 +10,7 @@ public class ColorStripUtils {
         put('ɪ', 'i'); put('ᴊ', 'j'); put('ᴋ', 'k'); put('ʟ', 'l');
         put('ᴍ', 'm'); put('ɴ', 'n'); put('ᴏ', 'o'); put('ᴘ', 'p');
         put('ʀ', 'r'); put('ѕ', 's'); put('ᴛ', 't'); put('ᴜ', 'u');
-        put('ᴡ', 'w'); put('ʏ', 'y'); put('ᴢ', 'z');
+        put('ᴡ', 'w'); put('ʏ', 'y'); put('ᴢ', 'z'); put('ꜱ', 's');
     }};
 
     public static String stripAllColorsAndFormats(String input) {

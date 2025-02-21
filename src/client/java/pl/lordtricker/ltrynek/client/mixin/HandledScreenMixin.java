@@ -1,10 +1,10 @@
-package com.example.ltrynek.client.mixin;
+package pl.lordtricker.ltrynek.client.mixin;
 
-import com.example.ltrynek.client.LtrynekClient;
-import com.example.ltrynek.client.keybinding.ToggleScanner;
-import com.example.ltrynek.client.price.ClientPriceListManager;
-import com.example.ltrynek.client.config.ServerEntry;
-import com.example.ltrynek.client.util.ColorStripUtils;
+import pl.lordtricker.ltrynek.client.LtrynekClient;
+import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
+import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.config.ServerEntry;
+import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.util.math.MatrixStack;

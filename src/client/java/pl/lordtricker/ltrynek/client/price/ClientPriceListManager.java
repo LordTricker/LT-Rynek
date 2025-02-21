@@ -1,6 +1,6 @@
-package com.example.ltrynek.client.price;
+package pl.lordtricker.ltrynek.client.price;
 
-import com.example.ltrynek.client.util.ColorStripUtils;
+import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
 
 import java.util.HashMap;
 import java.util.Map;

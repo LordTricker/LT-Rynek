@@ -1,9 +1,9 @@
 {
 	"required": true,
-	"package": "com.example.ltrynek.client.mixin",
+	"package": "pl.lordtricker.ltrynek.client.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"HandledScreenMixin"
+      "HandledScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

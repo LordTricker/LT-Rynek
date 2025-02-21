@@ -1,12 +1,12 @@
-package com.example.ltrynek.client.command;
+package pl.lordtricker.ltrynek.client.command;
 
-import com.example.ltrynek.client.ColorUtils;
-import com.example.ltrynek.client.LtrynekClient;
-import com.example.ltrynek.client.Messages;
-import com.example.ltrynek.client.config.ConfigLoader;
-import com.example.ltrynek.client.config.PriceEntry;
-import com.example.ltrynek.client.config.ServerEntry;
-import com.example.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.ColorUtils;
+import pl.lordtricker.ltrynek.client.LtrynekClient;
+import pl.lordtricker.ltrynek.client.Messages;
+import pl.lordtricker.ltrynek.client.config.ConfigLoader;
+import pl.lordtricker.ltrynek.client.config.PriceEntry;
+import pl.lordtricker.ltrynek.client.config.ServerEntry;
+import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;

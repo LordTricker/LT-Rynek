@@ -1,12 +1,12 @@
-package com.example.ltrynek.client;
+package pl.lordtricker.ltrynek.client;
 
-import com.example.ltrynek.client.command.ClientCommandRegistration;
-import com.example.ltrynek.client.config.ConfigLoader;
-import com.example.ltrynek.client.config.PriceEntry;
-import com.example.ltrynek.client.config.ServerEntry;
-import com.example.ltrynek.client.config.ServersConfig;
-import com.example.ltrynek.client.price.ClientPriceListManager;
-import com.example.ltrynek.client.keybinding.ToggleScanner;
+import pl.lordtricker.ltrynek.client.command.ClientCommandRegistration;
+import pl.lordtricker.ltrynek.client.config.ConfigLoader;
+import pl.lordtricker.ltrynek.client.config.PriceEntry;
+import pl.lordtricker.ltrynek.client.config.ServerEntry;
+import pl.lordtricker.ltrynek.client.config.ServersConfig;
+import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
