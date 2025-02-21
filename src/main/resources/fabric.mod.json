@@ -11,7 +11,7 @@
 		"homepage": "https://blazecode.pl/",
 		"sources": "https://github.com/LordTricker"
 	},
-	"license": "CC0-1.0",
+	"license": "MIT",
 	"icon": "assets/ltrynek/icon.png",
 
 	"environment": "*",
@@ -29,7 +29,7 @@
 
 	"depends": {
 		"fabricloader": ">=0.15.11",
-		"minecraft": ">=1.21.3 <=1.21.4",
+		"minecraft": "~1.21.1",
 		"java": ">=21",
 		"fabric-api": "*"
 	},
