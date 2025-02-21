@@ -9,7 +9,12 @@ import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
+import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.MinecraftClient;
+import pl.lordtricker.ltrynek.client.Messages;
+import pl.lordtricker.ltrynek.client.ColorUtils;
 
 import java.util.Map;
 
@@ -18,10 +23,13 @@ public class LtrynekClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
+		// Inicjalizacja keybindingów
 		ToggleScanner.init();
 
+		// Ładujemy konfigurację
 		serversConfig = ConfigLoader.loadConfig();
 
+		// Wczytujemy profile i dodajemy wpisy cenowe
 		for (ServerEntry entry : serversConfig.servers) {
 			ClientPriceListManager.setActiveProfile(entry.profileName);
 			for (PriceEntry pe : entry.prices) {
@@ -30,6 +38,7 @@ public class LtrynekClient implements ClientModInitializer {
 		}
 		ClientPriceListManager.setActiveProfile(serversConfig.defaultProfile);
 
+		// Rejestrujemy event do połączenia z serwerem
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 			String address = getServerAddress();
 			ServerEntry entry = findServerEntry(address);
@@ -49,7 +58,9 @@ public class LtrynekClient implements ClientModInitializer {
 			}
 		});
 
-		ClientCommandRegistration.registerCommands();
+		// Rejestrujemy komendy klienta
+		CommandDispatcher<FabricClientCommandSource> dispatcher = ClientCommandManager.DISPATCHER;
+		ClientCommandRegistration.registerCommands(dispatcher);
 	}
 
 	private String getServerAddress() {
