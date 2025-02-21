@@ -12,9 +12,16 @@
 - Automatycznie generowany plik konfiguracyjny dla profili użytkownika.
 
 ## 🛠️ Dostępne wersje
-- 🟢 1.18.2 - [Pobierz](https://github.com/LordTricker/LT-Rynek/tree/1.19.2/Releases)
-- 🟢 1.19.2 - [Pobierz](https://github.com/LordTricker/LT-Rynek/tree/1.19.2/Releases)
-- 🔴 1.21.1 - Wkrótce
+Dostępnę Releasy: https://github.com/LordTricker/LT-Rynek/releases
+- 🟢 1.18.2 - [Pobierz z Gtihub](https://github.com/LordTricker/LT-Rynek/releases/download/ver%2F1.18.2/ltrynek-1.0.0-Alpha+1.18.2.jar)
+- 🟢 1.19.2 - [Pobierz z Gtihub](https://github.com/LordTricker/LT-Rynek/releases/download/ver%2F1.19.2/ltrynek-1.0.2-Alpha+1.19.2.jar)
+- 🟢 1.19.4 - [Pobierz z Gtihub](https://github.com/LordTricker/LT-Rynek/releases/download/ver%2F1.19.4/ltrynek-1.0.0-Alpha+1.19.4.jar)
+- 🔷 1.21.1 - [Pobierz z Gtihub](https://github.com/LordTricker/LT-Rynek/releases/download/ver%2F1.21.1/ltrynek-1.0.0-Alpha+1.21.1.jar)
+- 🔷 1.21.3 - [Pobierz z Gtihub](https://github.com/LordTricker/LT-Rynek/releases/download/ver%2F1.21.4/ltrynek-1.0.0-Alpha+1.21.4.jar)
+- 🔷 1.21.4 - [Pobierz z Gtihub](https://github.com/LordTricker/LT-Rynek/releases/download/ver%2F1.21.4/ltrynek-1.0.0-Alpha+1.21.4.jar)
+- 🔴 1.21.5 - Wkrótce
+
+🔷 - Te wersje będą miały najnowsze updaty
 
 ## 📜 Komendy
 | Komenda | Opis |
@@ -48,6 +55,7 @@ W pliku można ręcznie edytować profile i ich zawartość.
 - Strona domowa: [BlazeCode](https://blazecode.pl/)
 - Repozytorium: [GitHub](https://github.com/LordTricker)
 - Wesprzyj autora: [Tipply](https://tipply.pl/@lordtricker)
+- Mój discord: LordTricker
 
 🎉 **Dziękujemy za korzystanie z LT-Rynek!**
 
