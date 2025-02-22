@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client;
+package pl.lordtricker.ltrynek.client.util;
 
 import java.util.HashMap;
 import java.util.Map;

@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client;
+package pl.lordtricker.ltrynek.client.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -54,5 +54,20 @@ public class Messages {
             replaced.add(line);
         }
         return String.join("\n", replaced);
+    }
+
+    public static List<String> getLines(String key) {
+        List<String> lines = messages.get(key);
+        if (lines == null) {
+            return Collections.singletonList("Missing message for key: " + key);
+        }
+        return lines;
+    }
+
+    public static String formatRaw(String line, Map<String, String> placeholders) {
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            line = line.replace("%" + entry.getKey() + "%", entry.getValue());
+        }
+        return line;
     }
 }
