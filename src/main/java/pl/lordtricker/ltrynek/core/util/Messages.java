@@ -1,4 +1,8 @@
+<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/util/Messages.java
 package pl.lordtricker.ltrynek.core.util;
+========
+package pl.lordtricker.ltrynek.client.util;
+>>>>>>>> d541205 (Big update: market analyzer, price formatter, sounds alert):src/client/java/pl/lordtricker/ltrynek/client/util/Messages.java
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -52,5 +56,20 @@ public class Messages {
             replaced.add(line);
         }
         return String.join("\n", replaced);
+    }
+
+    public static List<String> getLines(String key) {
+        List<String> lines = messages.get(key);
+        if (lines == null) {
+            return Collections.singletonList("Missing message for key: " + key);
+        }
+        return lines;
+    }
+
+    public static String formatRaw(String line, Map<String, String> placeholders) {
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            line = line.replace("%" + entry.getKey() + "%", entry.getValue());
+        }
+        return line;
     }
 }
