@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String CONFIG_FILE_NAME = "ltrynek-profiles.json";
+    private static final String CONFIG_FILE_NAME = "ltrynek-config.json";
 
     public static ServersConfig loadConfig() {
         Path configDir = FabricLoader.getInstance().getConfigDir();
@@ -46,18 +46,23 @@ public class ConfigLoader {
 
     /**
      * Tworzy domyślny config z przykładowymi wartościami, uwzględniając nowe pola:
-     * loreRegex, highlightColor oraz highlightColorStack.
+     * - loreRegex, highlightColor, highlightColorStack,
+     * - miniAlarmSound oraz miniAlarmSoundStack.
      */
     private static ServersConfig createDefaultConfig() {
         ServersConfig cfg = new ServersConfig();
         cfg.defaultProfile = "default";
 
+        // Konfiguracja profilu dla serwera minestar.pl
         ServerEntry server1 = new ServerEntry();
         server1.domains = List.of("minestar.pl");
         server1.profileName = "minestar_boxpvp";
         server1.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+[km]?).*";
         server1.highlightColor = "#00FF33";
         server1.highlightColorStack = "#FFAB00";
+        // Nowe pola dźwiękowe:
+        server1.miniAlarmSound = "minecraft:ui.button.click"; // przykładowy dźwięk dla pojedynczych slotów
+        server1.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete"; // przykładowy dźwięk dla stacków
 
         PriceEntry pe1 = new PriceEntry();
         pe1.name = "minecraft:gunpowder";
@@ -66,12 +71,16 @@ public class ConfigLoader {
 
         cfg.servers.add(server1);
 
+        // Konfiguracja profilu dla serwera anarchia.gg
         ServerEntry server2 = new ServerEntry();
         server2.domains = List.of("anarchia.gg");
         server2.profileName = "anarchia_smp";
         server2.loreRegex = "(?i).*Koszt.*?\\$([\\d.,kmKM]+).*";
         server2.highlightColor = "#00FF33";
         server2.highlightColorStack = "#FFAB00";
+        // Nowe pola dźwiękowe:
+        server2.miniAlarmSound = "minecraft:ui.button.click";
+        server2.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
 
         PriceEntry pe2 = new PriceEntry();
         pe2.name = "minecraft:emerald";

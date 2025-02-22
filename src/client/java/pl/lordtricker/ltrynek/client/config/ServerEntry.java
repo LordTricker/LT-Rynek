@@ -10,6 +10,8 @@ public class ServerEntry {
     public String loreRegex = "Cena: (\\d+)";
     public String highlightColor = "#80FF00";
     public String highlightColorStack = "#FF8000";
+    public String miniAlarmSound = "minecraft:ui.button.click";
+    public String miniAlarmSoundStack = "minecraft:entity.player.levelup";
 
 
     public List<PriceEntry> prices = new ArrayList<>();

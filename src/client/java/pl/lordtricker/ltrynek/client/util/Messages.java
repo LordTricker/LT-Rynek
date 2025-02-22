@@ -55,4 +55,19 @@ public class Messages {
         }
         return String.join("\n", replaced);
     }
+
+    public static List<String> getLines(String key) {
+        List<String> lines = messages.get(key);
+        if (lines == null) {
+            return Collections.singletonList("Missing message for key: " + key);
+        }
+        return lines;
+    }
+
+    public static String formatRaw(String line, Map<String, String> placeholders) {
+        for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+            line = line.replace("%" + entry.getKey() + "%", entry.getValue());
+        }
+        return line;
+    }
 }
