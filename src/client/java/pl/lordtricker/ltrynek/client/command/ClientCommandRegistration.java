@@ -1,8 +1,8 @@
 package pl.lordtricker.ltrynek.client.command;
 
-import pl.lordtricker.ltrynek.client.ColorUtils;
+import pl.lordtricker.ltrynek.client.util.ColorUtils;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
-import pl.lordtricker.ltrynek.client.Messages;
+import pl.lordtricker.ltrynek.client.util.Messages;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
