@@ -7,14 +7,17 @@ public class PriceFormatter {
         }
         raw = raw.trim().replace(',', '.');
         double multiplier = 1.0;
-        if (raw.toLowerCase().endsWith("k")) {
+        String lower = raw.toLowerCase();
+        if (lower.endsWith("k")) {
             multiplier = 1000.0;
             raw = raw.substring(0, raw.length() - 1);
-        } else if (raw.toLowerCase().endsWith("m")) {
+        } else if (lower.endsWith("mld")) {
+            multiplier = 1_000_000_000.0;
+            raw = raw.substring(0, raw.length() - 3);
+        } else if (lower.endsWith("m")) {
             multiplier = 1_000_000.0;
             raw = raw.substring(0, raw.length() - 1);
         }
-
         try {
             double base = Double.parseDouble(raw);
             return base * multiplier;
@@ -24,18 +27,22 @@ public class PriceFormatter {
     }
 
     /**
-     * Formatuje liczbę w "krótkim" formacie z przyrostkami k/m:
-     * - >= 1_000_000 -> "xx.xxM"
-     * - >= 1_000 -> "xx.xxK"
+     * Formatuje liczbę w "krótkim" formacie z przyrostkami k/m/mld:
+     * - >= 1_000_000_000 -> "xx.xxmld"
+     * - >= 1_000_000 -> "xx.xxm"
+     * - >= 1_000 -> "xx.xxk"
      * - < 1_000 -> zwykły format
      *
-     * Zwraca np. "1.59k", "12.50m", "999.00" (z zaokrągleniem do 2 miejsc).
+     * Zwraca np. "1.59k", "12.50m", "1.20mld", "999.00" (zaokrąglone do 2 miejsc).
      * Zmodyfikuj w razie potrzeby (np. usuń .00, itp.).
      */
     public static String formatPrice(double value) {
         double absVal = Math.abs(value);
         String suffix = "";
-        if (absVal >= 1_000_000) {
+        if (absVal >= 1_000_000_000) {
+            value /= 1_000_000_000;
+            suffix = "mld";
+        } else if (absVal >= 1_000_000) {
             value /= 1_000_000;
             suffix = "m";
         } else if (absVal >= 1_000) {
@@ -44,7 +51,6 @@ public class PriceFormatter {
         }
 
         String formatted = String.format("%.2f", value);
-
         if (formatted.contains(".")) {
             formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", "");
         }

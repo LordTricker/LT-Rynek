@@ -102,6 +102,8 @@ public abstract class HandledScreenMixin {
 		String displayName = stack.getName().getString();
 		String noColorName = ColorStripUtils.stripAllColorsAndFormats(displayName);
 
+//		System.out.println("[DEBUG] Slot " + slot.id + ": " + noColorName + " x" + displayName);
+
 		int stackSize = stack.getCount();
 		boolean isStack = stackSize > 1;
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
@@ -195,14 +197,25 @@ public abstract class HandledScreenMixin {
 
 	private double parsePriceWithSuffix(String raw) {
 		raw = raw.trim().replace(',', '.');
+		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
-		if (raw.endsWith("k") || raw.endsWith("K")) {
-			multiplier = 1000.0;
-			raw = raw.substring(0, raw.length() - 1);
-		} else if (raw.endsWith("m") || raw.endsWith("M")) {
+
+		// Najpierw sprawdzamy "mld"
+		if (lower.endsWith("mld")) {
+			multiplier = 1_000_000_000.0;
+			raw = raw.substring(0, raw.length() - 3);
+		}
+		// Potem "m"
+		else if (lower.endsWith("m")) {
 			multiplier = 1_000_000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
+		// Następnie "k"
+		else if (lower.endsWith("k")) {
+			multiplier = 1000.0;
+			raw = raw.substring(0, raw.length() - 1);
+		}
+
 		try {
 			double base = Double.parseDouble(raw);
 			return base * multiplier;
