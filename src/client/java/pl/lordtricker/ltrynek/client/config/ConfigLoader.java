@@ -57,7 +57,7 @@ public class ConfigLoader {
         ServerEntry server1 = new ServerEntry();
         server1.domains = List.of("minestar.pl");
         server1.profileName = "minestar_boxpvp";
-        server1.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+[km]?).*";
+        server1.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+(?:mld|[km])?).*";
         server1.highlightColor = "#00FF33";
         server1.highlightColorStack = "#FFAB00";
         // Nowe pola dźwiękowe:
@@ -75,7 +75,7 @@ public class ConfigLoader {
         ServerEntry server2 = new ServerEntry();
         server2.domains = List.of("anarchia.gg");
         server2.profileName = "anarchia_smp";
-        server2.loreRegex = "(?i).*Koszt.*?\\$([\\d.,kmKM]+).*";
+        server2.loreRegex = "(?i).*Koszt.*?\\$([\\d.,]+(?:mld|[km])?).*";
         server2.highlightColor = "#00FF33";
         server2.highlightColorStack = "#FFAB00";
         // Nowe pola dźwiękowe:
@@ -88,6 +88,42 @@ public class ConfigLoader {
         server2.prices.add(pe2);
 
         cfg.servers.add(server2);
+
+        // Konfiguracja profilu dla serwera anarchia.gg
+        ServerEntry server3 = new ServerEntry();
+        server3.domains = List.of("rapy.pl");
+        server3.profileName = "rapy";
+        server3.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+(?:mld|m|k)?).*";
+        server3.highlightColor = "#00FF33";
+        server3.highlightColorStack = "#FFAB00";
+        // Nowe pola dźwiękowe:
+        server3.miniAlarmSound = "minecraft:ui.button.click";
+        server3.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+
+        PriceEntry pe3 = new PriceEntry();
+        pe3.name = "minecraft:emerald";
+        pe3.maxPrice = 200.0;
+        server3.prices.add(pe3);
+
+        cfg.servers.add(server3);
+
+        // Konfiguracja profilu dla serwera anarchia.gg
+        ServerEntry server4 = new ServerEntry();
+        server4.domains = List.of("pykmc.pl");
+        server4.profileName = "pykmc";
+        server4.loreRegex = "(?i).*Kwota.*?\\$([\\d.,]+(?:mld|m|k)?).*";
+        server4.highlightColor = "#00FF33";
+        server4.highlightColorStack = "#FFAB00";
+        // Nowe pola dźwiękowe:
+        server4.miniAlarmSound = "minecraft:ui.button.click";
+        server4.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+
+        PriceEntry pe4 = new PriceEntry();
+        pe4.name = "minecraft:emerald";
+        pe4.maxPrice = 200.0;
+        server2.prices.add(pe4);
+
+        cfg.servers.add(server3);
 
         return cfg;
     }

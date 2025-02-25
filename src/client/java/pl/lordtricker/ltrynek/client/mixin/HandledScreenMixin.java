@@ -195,12 +195,21 @@ public abstract class HandledScreenMixin {
 
 	private double parsePriceWithSuffix(String raw) {
 		raw = raw.trim().replace(',', '.');
+		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
-		if (raw.endsWith("k") || raw.endsWith("K")) {
-			multiplier = 1000.0;
-			raw = raw.substring(0, raw.length() - 1);
-		} else if (raw.endsWith("m") || raw.endsWith("M")) {
+		// Najpierw sprawdzamy "mld"
+		if (lower.endsWith("mld")) {
+			multiplier = 1_000_000_000.0;
+			raw = raw.substring(0, raw.length() - 3);
+		}
+		// Potem "m"
+		else if (lower.endsWith("m")) {
 			multiplier = 1_000_000.0;
+			raw = raw.substring(0, raw.length() - 1);
+		}
+		// Następnie "k"
+		else if (lower.endsWith("k")) {
+			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
 		try {

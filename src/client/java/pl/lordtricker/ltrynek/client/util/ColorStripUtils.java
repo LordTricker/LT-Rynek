@@ -11,6 +11,32 @@ public class ColorStripUtils {
         put('ᴍ', 'm'); put('ɴ', 'n'); put('ᴏ', 'o'); put('ᴘ', 'p');
         put('ʀ', 'r'); put('ѕ', 's'); put('ᴛ', 't'); put('ᴜ', 'u');
         put('ᴡ', 'w'); put('ʏ', 'y'); put('ᴢ', 'z'); put('ꜱ', 's');
+        put('ғ', 'f'); put('ᴌ', 'ł'); put('ᴠ', 'v');
+        put('ᵃ', 'a'); put('ᵇ', 'b'); put('ᶜ', 'c'); put('ᵈ', 'd');
+        put('ᵉ', 'e'); put('ᶠ', 'f'); put('ᵍ', 'g'); put('ʰ', 'h');
+        put('ᶦ', 'i'); put('ʲ', 'j'); put('ᵏ', 'k'); put('ˡ', 'l');
+        put('ᵐ', 'm'); put('ⁿ', 'n'); put('ᵒ', 'o'); put('ᵖ', 'p');
+        put('ʳ', 'r'); put('ˢ', 's'); put('ᵗ', 't'); put('ᵘ', 'u');
+        put('ᵛ', 'v'); put('ʷ', 'w'); put('ˣ', 'x'); put('ʸ', 'y');
+        put('ᶻ', 'z');
+        put('ⓐ', 'a'); put('ⓑ', 'b'); put('ⓒ', 'c'); put('ⓓ', 'd');
+        put('ⓔ', 'e'); put('ⓕ', 'f'); put('ⓖ', 'g'); put('ⓗ', 'h');
+        put('ⓘ', 'i'); put('ⓙ', 'j'); put('ⓚ', 'k'); put('ⓛ', 'l');
+        put('ⓜ', 'm'); put('ⓝ', 'n'); put('ⓞ', 'o'); put('ⓟ', 'p');
+        put('ⓠ', 'q'); put('ⓡ', 'r'); put('ⓢ', 's'); put('ⓣ', 't');
+        put('ⓤ', 'u'); put('ⓥ', 'v'); put('ⓦ', 'w'); put('ⓧ', 'x');
+        put('ⓨ', 'y'); put('ⓩ', 'z');
+        put('⁰', '0'); put('¹', '1'); put('²', '2'); put('³', '3');
+        put('⁴', '4'); put('⁵', '5'); put('⁶', '6'); put('⁷', '7');
+        put('⁸', '8'); put('⁹', '9'); put('₀', '0'); put('₁', '1');
+        put('₂', '2'); put('₃', '3'); put('₄', '4'); put('₅', '5');
+        put('₆', '6'); put('₇', '7'); put('₈', '8'); put('₉', '9');
+        put('０', '0'); put('１', '1'); put('２', '2'); put('３', '3');
+        put('４', '4'); put('５', '5'); put('６', '6'); put('７', '7');
+        put('８', '8'); put('９', '9');
+        put('⓪', '0'); put('①', '1'); put('②', '2'); put('③', '3');
+        put('④', '4'); put('⑤', '5'); put('⑥', '6'); put('⑦', '7');
+        put('⑧', '8'); put('⑨', '9');
     }};
 
     public static String stripAllColorsAndFormats(String input) {
