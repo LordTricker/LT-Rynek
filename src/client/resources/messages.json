@@ -62,7 +62,7 @@
     "&8[&3L&bT &fRynek&8] &aCtrl &f+ &aR &8- &7Aby wlaczyc szukanie",
     " ",
     " &6| &eConfig zostal wygenerowany w miejscu:",
-    " &6| &e%appdata%/.minecraft/config/&6ltrynek-profiles.json",
+    " &6| &e%appdata%/.minecraft/config/&6ltrynek-config.json",
     " "
   ],
   "player.join": [
@@ -179,9 +179,7 @@
     "&8[&3L&bT &fRynek&8] &7Oto co udalo mi sie ustalic:"
   ],
   "command.searchlist.stop.line": [
-    " ",
-    "&8- &f%item%&8(&b%count%&8): &fminCena: &a%min%, &fmaxCena: &2%max%, &fśrednia: &e%avg%",
-    " "
+    "&8- &f%item%&8(&b%count%&8): &fminCena: &a%min%, &fmaxCena: &2%max%, &fśrednia: &e%avg%"
   ],
   "command.searchlist.list.header": [
     " ",
