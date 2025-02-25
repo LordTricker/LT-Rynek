@@ -7,10 +7,14 @@ public class PriceFormatter {
         }
         raw = raw.trim().replace(',', '.');
         double multiplier = 1.0;
-        if (raw.toLowerCase().endsWith("k")) {
+        String lower = raw.toLowerCase();
+        if (lower.endsWith("k")) {
             multiplier = 1000.0;
             raw = raw.substring(0, raw.length() - 1);
-        } else if (raw.toLowerCase().endsWith("m")) {
+        } else if (lower.endsWith("mld")) {
+            multiplier = 1_000_000_000.0;
+            raw = raw.substring(0, raw.length() - 3);
+        } else if (lower.endsWith("m")) {
             multiplier = 1_000_000.0;
             raw = raw.substring(0, raw.length() - 1);
         }
@@ -35,7 +39,10 @@ public class PriceFormatter {
     public static String formatPrice(double value) {
         double absVal = Math.abs(value);
         String suffix = "";
-        if (absVal >= 1_000_000) {
+        if (absVal >= 1_000_000_000) {
+            value /= 1_000_000_000;
+            suffix = "mld";
+        } else if (absVal >= 1_000_000) {
             value /= 1_000_000;
             suffix = "m";
         } else if (absVal >= 1_000) {
