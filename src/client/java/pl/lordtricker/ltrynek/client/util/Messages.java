@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Messages {
@@ -17,7 +18,7 @@ public class Messages {
                 System.err.println("messages.json not found in resources!");
             } else {
                 Type type = new TypeToken<Map<String, List<String>>>() {}.getType();
-                Map<String, List<String>> loaded = new Gson().fromJson(new InputStreamReader(in), type);
+                Map<String, List<String>> loaded = new Gson().fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), type);
                 if (loaded != null) {
                     messages.putAll(loaded);
                 }
