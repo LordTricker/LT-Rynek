@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client;
+package pl.lordtricker.ltrynek.client.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;

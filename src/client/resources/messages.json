@@ -49,6 +49,12 @@
     "&8- &f/ltr add <maxCena> <przedmiot> &8- &7Dodaje przedmiot do profilu",
     "&8- &f/ltr remove <przedmiot> &8- &7Usuwa przedmiot z profilu",
     "&8- &f/ltr list &8- &7Wyswietla przedmioty profilu",
+    "&8- &f/ltr sounds &8- &7Wlacza/wyłącza alarmy dźwiękowe",
+    "&8- &f/ltr searchlist add <przedmiot> &8- &7Dodaje przedmiot do listy wyszukiwania",
+    "&8- &f/ltr searchlist remove <przedmiot> &8- &7Usuwa przedmiot z listy wyszukiwania",
+    "&8- &f/ltr searchlist list &8- &7Wyświetla listę wyszukiwanych przedmiotów",
+    "&8- &f/ltr searchlist start &8- &7Rozpoczyna zliczanie przedmiotow",
+    "&8- &f/ltr searchlist start &8- &7Podsumowuje zliczone przedmioty",
     "&8- &f/ltr pomoc &8- &7Lista komend",
     "&8- &f/ltr config save &8- &7Zapisuje wszystko do configu",
     "&8- &f/ltr config reload &8- &7Przeladowuje dane z configu",
@@ -56,7 +62,7 @@
     "&8[&3L&bT &fRynek&8] &aCtrl &f+ &aR &8- &7Aby wlaczyc szukanie",
     " ",
     " &6| &eConfig zostal wygenerowany w miejscu:",
-    " &6| &e%appdata%/.minecraft/config/&6ltrynek-profiles.json",
+    " &6| &e%appdata%/.minecraft/config/&6ltrynek-config.json",
     " "
   ],
   "player.join": [
@@ -110,17 +116,83 @@
   ],
   "command.config.reload.success": [
     " ",
-    "&8[&3L&bT &fRynek&8] &aKonfiguracja zostala przeladowana.",
+    "&8[&3L&bT &fRynek&8] &aKonfiguracja zostala przeladowana&7.",
     " "
   ],
   "command.scanner.toggle.on": [
     " ",
-    "&8[&3L&bT &fRynek&8] &7Skanowanie przedmiotow &awlaczone.",
+    "&8[&3L&bT &fRynek&8] &7Skanowanie przedmiotow &awlaczone&7.",
     " "
   ],
   "command.scanner.toggle.off": [
     " ",
-    "&8[&3L&bT &fRynek&8] &7Skanowanie przedmiotow &cwylaczone.",
+    "&8[&3L&bT &fRynek&8] &7Skanowanie przedmiotow &cwylaczone&7.",
     " "
+  ],
+  "command.sounds.current_on": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Powiadomienia dzwiekowe sa &awlaczone&7.",
+    " "
+  ],
+  "command.sounds.current_off": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Powiadomienia dzwiekowe sa &cwylaczone&7.",
+    " "
+  ],
+  "command.sounds.enabled": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Powiadomienia dzwiekowe zostaly &awlaczone&7.",
+    " "
+  ],
+  "command.sounds.disabled": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Powiadomienia dzwiekowe zostaly &cwylaczone&7.",
+    " "
+  ],
+  "command.searchlist.list.empty": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Lista z przedmiotami do wyszukiwania jest &cpusta&7.",
+    " "
+  ],
+  "command.searchlist.add": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Dodano &a'%item%' &7do listy wyszukiwania.",
+    " "
+  ],
+  "command.searchlist.remove": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Usunięto &c'%item%' &7do listy wyszukiwania.",
+    " "
+  ],
+  "command.searchlist.start": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &aRozpoczeto &7zliczanie &fwyswietlonych &7przedmiotow",
+    "&8- &7Otworz &frynek &7i przewertuj strony, a ja zajme sie reszta.",
+    "&8- &7Po zakonczeniu wpisz &f/ltr searchlist stop &7aby poznac statysyki",
+    " ",
+    "&6| &ePo 5 minutach sam zatrzymam zliczanie",
+    " "
+  ],
+  "command.searchlist.stop.header": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &aZakończono &7zliczanie wyswietlonych przedmiotow",
+    "&8[&3L&bT &fRynek&8] &7Oto co udalo mi sie ustalic:"
+  ],
+  "command.searchlist.stop.line": [
+    " ",
+    "&8- &f%item%&8(&b%count%&8): &fminCena: &a%min%, &fmaxCena: &2%max%, &fśrednia: &e%avg%"
+  ],
+  "command.searchlist.list.header": [
+    " ",
+    "&8[&3L&bT &fRynek&8] &7Lista przedmiotów do wyszukiwania:"
+  ],
+  "command.searchlist.list.line": [
+    "&8- &f%item%"
+  ],
+  "command.searchlist.list.remove.hover": [
+    "Kliknij aby usunac ten przedmiot"
+  ],
+  "command.searchlist.expired": [
+    "Czas wyszukiwania minął."
   ]
 }
