@@ -14,7 +14,7 @@ import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.MinecraftClient;
 import pl.lordtricker.ltrynek.client.Messages;
-import pl.lordtricker.ltrynek.client.ColorUtils;
+import pl.lordtricker.ltrynek.client.util.ColorUtils;
 
 import java.util.Map;
 

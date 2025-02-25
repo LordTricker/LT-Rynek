@@ -9,13 +9,15 @@ import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import pl.lordtricker.ltrynek.client.ColorUtils;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
-import pl.lordtricker.ltrynek.client.Messages;
+import pl.lordtricker.ltrynek.client.util.Messages;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.util.ColorUtils;
+import pl.lordtricker.ltrynek.client.util.PriceFormatter;
 
 import java.util.Map;
 
@@ -24,7 +26,7 @@ public class ClientCommandRegistration {
     public static void registerCommands(CommandDispatcher<FabricClientCommandSource> dispatcher) {
         dispatcher.register(
                 ClientCommandManager.literal("ltr")
-                        // /ltr
+                        // /ltr – wyświetlenie informacji o aktualnym profilu
                         .executes(ctx -> {
                             String activeProfile = ClientPriceListManager.getActiveProfile();
                             String message = Messages.format("mod.info", Map.of("profile", activeProfile));
@@ -45,7 +47,7 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr profiles
+                        // /ltr profiles – listowanie dostępnych profili
                         .then(ClientCommandManager.literal("profiles")
                                 .executes(ctx -> {
                                     String allProfiles = ClientPriceListManager.listProfiles();
@@ -89,12 +91,17 @@ public class ClientCommandRegistration {
                                                     String maxPriceStr = StringArgumentType.getString(ctx, "maxPrice");
                                                     String itemName = StringArgumentType.getString(ctx, "itemName");
                                                     try {
-                                                        double maxPrice = Double.parseDouble(maxPriceStr);
+                                                        double parsedPrice = PriceFormatter.parsePrice(maxPriceStr);
+                                                        if (parsedPrice < 0) {
+                                                            ctx.getSource().sendError(Text.of("Invalid price format: " + maxPriceStr));
+                                                            return 0;
+                                                        }
                                                         String activeProfile = ClientPriceListManager.getActiveProfile();
-                                                        ClientPriceListManager.addPriceEntry(itemName, maxPrice);
+                                                        ClientPriceListManager.addPriceEntry(itemName, parsedPrice);
+                                                        String shortPrice = PriceFormatter.formatPrice(parsedPrice);
                                                         String msg = Messages.format("command.add.success", Map.of(
                                                                 "item", itemName,
-                                                                "price", String.valueOf(maxPrice),
+                                                                "price", shortPrice,
                                                                 "profile", activeProfile
                                                         ));
                                                         ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
@@ -141,30 +148,24 @@ public class ClientCommandRegistration {
                                         String editIconStr = Messages.get("pricelist.icon.edit");
                                         MutableText editIcon = (MutableText) ColorUtils.translateColorCodes(editIconStr);
                                         editIcon.setStyle(
-                                                Style.EMPTY
-                                                        .withClickEvent(new ClickEvent(
+                                                Style.EMPTY.withClickEvent(new ClickEvent(
                                                                 ClickEvent.Action.SUGGEST_COMMAND,
-                                                                "/ltr add " + priceStr + " " + itemName
-                                                        ))
+                                                                "/ltr add " + priceStr + " " + itemName))
                                                         .withHoverEvent(new HoverEvent(
                                                                 HoverEvent.Action.SHOW_TEXT,
-                                                                Text.of("Kliknij aby zedytować " + itemName)
-                                                        ))
+                                                                Text.of("Kliknij aby zedytować " + itemName)))
                                         );
 
                                         // Ikona usuwania
                                         String removeIconStr = Messages.get("pricelist.icon.remove");
                                         MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
                                         removeIcon.setStyle(
-                                                Style.EMPTY
-                                                        .withClickEvent(new ClickEvent(
+                                                Style.EMPTY.withClickEvent(new ClickEvent(
                                                                 ClickEvent.Action.RUN_COMMAND,
-                                                                "/ltr remove " + itemName
-                                                        ))
+                                                                "/ltr remove " + itemName))
                                                         .withHoverEvent(new HoverEvent(
                                                                 HoverEvent.Action.SHOW_TEXT,
-                                                                Text.of("Kliknij aby usunąć " + itemName)
-                                                        ))
+                                                                Text.of("Kliknij aby usunąć " + itemName)))
                                         );
 
                                         String itemLineStr = Messages.format("pricelist.item_line",
@@ -179,10 +180,8 @@ public class ClientCommandRegistration {
 
                                         finalText.append(lineText);
                                     }
-                                    // Nagłówek
                                     String msgHeader = Messages.format("command.list",
-                                            Map.of("profile", activeProfile, "list", "")
-                                    );
+                                            Map.of("profile", activeProfile, "list", ""));
                                     MutableText header = (MutableText) ColorUtils.translateColorCodes(msgHeader);
                                     ctx.getSource().sendFeedback(header);
                                     ctx.getSource().sendFeedback(finalText);
@@ -217,6 +216,96 @@ public class ClientCommandRegistration {
                                             reinitProfilesFromConfig();
                                             String message = Messages.get("command.config.reload.success");
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(message));
+                                            return 1;
+                                        })
+                                )
+                        )
+
+                        // /ltr searchlist (add, remove, start, stop, list)
+                        .then(ClientCommandManager.literal("searchlist")
+                                .then(ClientCommandManager.literal("add")
+                                        .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
+                                                .executes(ctx -> {
+                                                    String item = StringArgumentType.getString(ctx, "item");
+                                                    ClientSearchListManager.addItem(item);
+                                                    String msg = Messages.format("command.searchlist.add", Map.of("item", item));
+                                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                                .then(ClientCommandManager.literal("remove")
+                                        .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
+                                                .executes(ctx -> {
+                                                    String item = StringArgumentType.getString(ctx, "item");
+                                                    ClientSearchListManager.removeItem(item);
+                                                    String msg = Messages.format("command.searchlist.remove", Map.of("item", item));
+                                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                    return 1;
+                                                })
+                                        )
+                                )
+                                .then(ClientCommandManager.literal("start")
+                                        .executes(ctx -> {
+                                            ClientSearchListManager.startSearch();
+                                            String msg = Messages.get("command.searchlist.start");
+                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            return 1;
+                                        })
+                                )
+                                .then(ClientCommandManager.literal("stop")
+                                        .executes(ctx -> {
+                                            ClientSearchListManager.stopSearch();
+                                            java.util.List<String> searchItems = ClientSearchListManager.getSearchList();
+                                            if (searchItems.isEmpty()) {
+                                                String emptyMsg = Messages.get("command.searchlist.list.empty");
+                                                ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(emptyMsg));
+                                                return 1;
+                                            }
+                                            MutableText finalText = (MutableText) Text.of("");
+                                            String headerRaw = Messages.get("command.searchlist.stop.header");
+                                            finalText.append(ColorUtils.translateColorCodes(headerRaw)).append(Text.of("\n"));
+                                            for (String item : searchItems) {
+                                                ClientSearchListManager.Stats stats = ClientSearchListManager.getStats(item);
+                                                if (stats == null || stats.getCount() == 0) continue;
+                                                String lineRaw = Messages.format("command.searchlist.stop.line", Map.of(
+                                                        "item", item,
+                                                        "count", String.valueOf(stats.getCount()),
+                                                        "min", PriceFormatter.formatPrice(stats.getMin()),
+                                                        "max", PriceFormatter.formatPrice(stats.getMax()),
+                                                        "avg", PriceFormatter.formatPrice(stats.getAverage())
+                                                ));
+                                                finalText.append(ColorUtils.translateColorCodes(lineRaw)).append(Text.of("\n"));
+                                            }
+                                            ctx.getSource().sendFeedback(finalText);
+                                            return 1;
+                                        })
+                                )
+                                .then(ClientCommandManager.literal("list")
+                                        .executes(ctx -> {
+                                            java.util.List<String> searchItems = ClientSearchListManager.getSearchList();
+                                            if (searchItems.isEmpty()) {
+                                                String emptyMsg = Messages.get("command.searchlist.list.empty");
+                                                ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(emptyMsg));
+                                                return 1;
+                                            }
+                                            String header = Messages.get("command.searchlist.list.header");
+                                            MutableText finalText = (MutableText) ColorUtils.translateColorCodes(header);
+                                            finalText.append(Text.of("\n"));
+                                            for (String item : searchItems) {
+                                                String lineTemplate = Messages.format("command.searchlist.list.line", Map.of("item", item));
+                                                MutableText lineText = (MutableText) ColorUtils.translateColorCodes(lineTemplate);
+                                                Style clickableStyle = Style.EMPTY.withClickEvent(new ClickEvent(
+                                                                ClickEvent.Action.RUN_COMMAND,
+                                                                "/ltr searchlist remove " + item))
+                                                        .withHoverEvent(new HoverEvent(
+                                                                HoverEvent.Action.SHOW_TEXT,
+                                                                Text.of(Messages.get("command.searchlist.list.remove.hover"))
+                                                        ));
+                                                lineText.setStyle(clickableStyle);
+                                                finalText.append(lineText).append(Text.of("\n"));
+                                            }
+                                            ctx.getSource().sendFeedback(finalText);
                                             return 1;
                                         })
                                 )

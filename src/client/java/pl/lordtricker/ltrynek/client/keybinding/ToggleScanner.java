@@ -1,6 +1,6 @@
 package pl.lordtricker.ltrynek.client.keybinding;
 
-import pl.lordtricker.ltrynek.client.ColorUtils;
+import pl.lordtricker.ltrynek.client.util.ColorUtils;
 import pl.lordtricker.ltrynek.client.Messages;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
