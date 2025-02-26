@@ -71,14 +71,12 @@ public class ConfigLoader {
 
         cfg.servers.add(server1);
 
-        // Konfiguracja profilu dla serwera anarchia.gg
         ServerEntry server2 = new ServerEntry();
         server2.domains = List.of("anarchia.gg");
         server2.profileName = "anarchia_smp";
         server2.loreRegex = "(?i).*Koszt.*?\\$([\\d.,]+(?:mld|[km])?).*";
         server2.highlightColor = "#00FF33";
         server2.highlightColorStack = "#FFAB00";
-        // Nowe pola dźwiękowe:
         server2.miniAlarmSound = "minecraft:ui.button.click";
         server2.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
 
@@ -89,14 +87,12 @@ public class ConfigLoader {
 
         cfg.servers.add(server2);
 
-        // Konfiguracja profilu dla serwera anarchia.gg
         ServerEntry server3 = new ServerEntry();
         server3.domains = List.of("rapy.pl");
         server3.profileName = "rapy";
         server3.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+(?:mld|m|k)?).*";
         server3.highlightColor = "#00FF33";
         server3.highlightColorStack = "#FFAB00";
-        // Nowe pola dźwiękowe:
         server3.miniAlarmSound = "minecraft:ui.button.click";
         server3.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
 
@@ -107,23 +103,37 @@ public class ConfigLoader {
 
         cfg.servers.add(server3);
 
-        // Konfiguracja profilu dla serwera anarchia.gg
         ServerEntry server4 = new ServerEntry();
         server4.domains = List.of("pykmc.pl");
         server4.profileName = "pykmc";
         server4.loreRegex = "(?i).*Kwota.*?\\$([\\d.,]+(?:mld|m|k)?).*";
         server4.highlightColor = "#00FF33";
         server4.highlightColorStack = "#FFAB00";
-        // Nowe pola dźwiękowe:
         server4.miniAlarmSound = "minecraft:ui.button.click";
         server4.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
 
         PriceEntry pe4 = new PriceEntry();
         pe4.name = "minecraft:emerald";
         pe4.maxPrice = 200.0;
-        server2.prices.add(pe4);
+        server4.prices.add(pe4);
 
-        cfg.servers.add(server3);
+        cfg.servers.add(server4);
+
+        ServerEntry server5 = new ServerEntry();
+        server5.domains = List.of("n1mc.pl");
+        server5.profileName = "n1mc";
+        server5.loreRegex = "(?i).*Cena.*?([\\d.,]+(?:mld|m|k)?)\\$.*";
+        server5.highlightColor = "#00FF33";
+        server5.highlightColorStack = "#FFAB00";
+        server5.miniAlarmSound = "minecraft:ui.button.click";
+        server5.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+
+        PriceEntry pe5 = new PriceEntry();
+        pe5.name = "minecraft:emerald";
+        pe5.maxPrice = 200.0;
+        server5.prices.add(pe5);
+
+        cfg.servers.add(server5);
 
         return cfg;
     }
