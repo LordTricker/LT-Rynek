@@ -112,9 +112,25 @@ public class ConfigLoader {
         PriceEntry pe4 = new PriceEntry();
         pe4.name = "minecraft:emerald";
         pe4.maxPrice = 200.0;
-        server2.prices.add(pe4);
+        server4.prices.add(pe4);
 
-        cfg.servers.add(server3);
+        cfg.servers.add(server4);
+
+        ServerEntry server5 = new ServerEntry();
+        server5.domains = List.of("n1mc.pl");
+        server5.profileName = "n1mc";
+        server5.loreRegex = "(?i).*Cena.*?([\\d.,]+(?:mld|m|k)?)\\$.*";
+        server5.highlightColor = "#00FF33";
+        server5.highlightColorStack = "#FFAB00";
+        server5.miniAlarmSound = "minecraft:ui.button.click";
+        server5.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+
+        PriceEntry pe5 = new PriceEntry();
+        pe5.name = "minecraft:emerald";
+        pe5.maxPrice = 200.0;
+        server5.prices.add(pe5);
+
+        cfg.servers.add(server5);
 
         return cfg;
     }
