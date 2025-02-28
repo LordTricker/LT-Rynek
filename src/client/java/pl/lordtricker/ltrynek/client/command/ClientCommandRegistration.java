@@ -101,30 +101,51 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("add")
                                 .then(ClientCommandManager.argument("maxPrice", StringArgumentType.word())
                                         .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
+                                                .suggests((context, builder) -> {
+                                                    String remaining = builder.getRemaining().toLowerCase();
+
+                                                    if (remaining.contains("minecraft:")) {
+                                                        var allItemIds = net.minecraft.registry.Registries.ITEM.getIds();
+
+                                                        for (var itemId : allItemIds) {
+                                                            String asString = itemId.toString();
+                                                            if (asString.contains(remaining)) {
+                                                                builder.suggest(asString);
+                                                            }
+                                                        }
+                                                    }
+                                                    return builder.buildFuture();
+                                                })
                                                 .executes(ctx -> {
                                                     String maxPriceStr = StringArgumentType.getString(ctx, "maxPrice");
                                                     double parsedPrice = PriceFormatter.parsePrice(maxPriceStr);
+
                                                     if (parsedPrice < 0) {
                                                         ctx.getSource().sendError(Text.literal("Invalid price format: " + maxPriceStr));
                                                         return 0;
                                                     }
+
                                                     String fullItemName = StringArgumentType.getString(ctx, "itemName");
-                                                    String activeProfile = ClientPriceListManager.getActiveProfile();
-                                                    // Wywołujemy jedną metodę – która sama sparsuje fullItemName za pomocą CompositeKeyUtil
                                                     ClientPriceListManager.addPriceEntry(fullItemName, parsedPrice);
-                                                    String friendly = CompositeKeyUtil.getFriendlyName(CompositeKeyUtil.createCompositeKey(fullItemName));
+
+                                                    String activeProfile = ClientPriceListManager.getActiveProfile();
+                                                    String friendly = CompositeKeyUtil.getFriendlyName(
+                                                            CompositeKeyUtil.createCompositeKey(fullItemName));
                                                     String shortPrice = PriceFormatter.formatPrice(parsedPrice);
+
                                                     String msg = Messages.format("command.add.success", Map.of(
                                                             "item", friendly,
                                                             "price", shortPrice,
                                                             "profile", activeProfile
                                                     ));
+
                                                     ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
                                                     return 1;
                                                 })
                                         )
                                 )
                         )
+
                         // /ltr remove <itemName>
                         .then(ClientCommandManager.literal("remove")
                                 .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
@@ -132,7 +153,8 @@ public class ClientCommandRegistration {
                                             String rawItem = StringArgumentType.getString(ctx, "itemName");
                                             String activeProfile = ClientPriceListManager.getActiveProfile();
                                             ClientPriceListManager.removePriceEntry(rawItem);
-                                            String friendly = CompositeKeyUtil.getFriendlyName(CompositeKeyUtil.createCompositeKey(rawItem));
+                                            String friendly = CompositeKeyUtil.getFriendlyName(
+                                                    CompositeKeyUtil.createCompositeKey(rawItem));
                                             String msg = Messages.format("command.remove.success", Map.of(
                                                     "item", friendly,
                                                     "profile", activeProfile
@@ -154,7 +176,12 @@ public class ClientCommandRegistration {
                                         if (parts.length < 2) continue;
                                         String priceStr = parts[0];
                                         String itemName = parts[1];
-                                        double parsed = Double.parseDouble(priceStr);
+                                        double parsed;
+                                        try {
+                                            parsed = Double.parseDouble(priceStr);
+                                        } catch (NumberFormatException e) {
+                                            continue;
+                                        }
                                         String shortPrice = PriceFormatter.formatPrice(parsed);
 
                                         // Ikona edycji
@@ -249,6 +276,20 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("search")
                                 .then(ClientCommandManager.literal("add")
                                         .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
+                                                .suggests((context, builder) -> {
+                                                    String remaining = builder.getRemaining().toLowerCase();
+
+                                                    if (remaining.contains("minecraft:")) {
+                                                        var allItemIds = net.minecraft.registry.Registries.ITEM.getIds();
+                                                        for (var itemId : allItemIds) {
+                                                            String asString = itemId.toString(); // np. "minecraft:stone"
+                                                            if (asString.contains(remaining)) {
+                                                                builder.suggest(asString);
+                                                            }
+                                                        }
+                                                    }
+                                                    return builder.buildFuture();
+                                                })
                                                 .executes(ctx -> {
                                                     String rawItem = StringArgumentType.getString(ctx, "item");
                                                     ClientSearchListManager.addItem(rawItem);
@@ -263,7 +304,8 @@ public class ClientCommandRegistration {
                                                 .executes(ctx -> {
                                                     String rawItem = StringArgumentType.getString(ctx, "item");
                                                     ClientSearchListManager.removeItem(rawItem);
-                                                    String friendly = CompositeKeyUtil.getFriendlyName(CompositeKeyUtil.createCompositeKey(rawItem));
+                                                    String friendly = CompositeKeyUtil.getFriendlyName(
+                                                            CompositeKeyUtil.createCompositeKey(rawItem));
                                                     String msg = Messages.format("command.searchlist.remove", Map.of("item", friendly));
                                                     ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
                                                     return 1;

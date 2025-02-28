@@ -49,13 +49,11 @@ public class ClientPriceListManager {
 
     /**
      * Dodaje lub ustawia wpis (nazwa, lore, materiał, maxPrice) w aktywnym profilu.
-     * Metoda przyjmuje rawItem w formacie:
-     *    BazowaNazwa("Lore tekst")["material"]
-     * Jeśli wpis zawiera dodatkowe informacje, zostaną one wyekstrahowane – w przeciwnym razie pola lore i materiał pozostaną puste.
      */
     public static void addPriceEntry(String rawItem, double maxPrice) {
         String compositeKey = CompositeKeyUtil.createCompositeKey(rawItem);
         String[] parts = compositeKey.split("\\|", -1);
+
         PriceEntry newEntry = new PriceEntry();
         newEntry.name = parts[0];
         newEntry.lore = parts[1];
@@ -63,11 +61,15 @@ public class ClientPriceListManager {
         newEntry.maxPrice = maxPrice;
 
         List<PriceEntry> entries = priceLists.computeIfAbsent(activeProfile, k -> new ArrayList<>());
-        // Usuwamy istniejący wpis o tym samym composite key (czyli te same baseName, lore i material)
+
+        // Usuwamy istniejący wpis o tym samym composite key (baseName|lore|material)
         entries.removeIf(pe -> {
-            String keyFromEntry = (pe.name + "|" + (pe.lore == null ? "" : pe.lore) + "|" + (pe.material == null ? "" : pe.material)).toLowerCase();
+            String keyFromEntry = (pe.name + "|" +
+                    (pe.lore == null ? "" : pe.lore) + "|" +
+                    (pe.material == null ? "" : pe.material)).toLowerCase();
             return keyFromEntry.equals(compositeKey);
         });
+
         entries.add(newEntry);
     }
 
@@ -79,15 +81,17 @@ public class ClientPriceListManager {
         List<PriceEntry> entries = priceLists.get(activeProfile);
         if (entries != null) {
             entries.removeIf(pe -> {
-                String keyFromEntry = (pe.name + "|" + (pe.lore == null ? "" : pe.lore) + "|" + (pe.material == null ? "" : pe.material)).toLowerCase();
+                String keyFromEntry = (pe.name + "|" +
+                        (pe.lore == null ? "" : pe.lore) + "|" +
+                        (pe.material == null ? "" : pe.material)).toLowerCase();
                 return keyFromEntry.equals(compositeKey);
             });
         }
     }
 
     /**
-     * Zwraca sformatowaną listę przedmiotów (name i maxPrice) z aktywnego profilu.
-     * Format: "maxPrice name", każdy wpis w osobnej linii.
+     * Zwraca sformatowaną listę przedmiotów (maxPrice + nazwa) z aktywnego profilu.
+     * Format: "maxPrice name(lore)[material]" w każdej linii.
      */
     public static String getPriceListAsString() {
         List<PriceEntry> entries = priceLists.get(activeProfile);
@@ -96,9 +100,7 @@ public class ClientPriceListManager {
         }
         StringBuilder sb = new StringBuilder();
         for (PriceEntry pe : entries) {
-            sb.append(pe.maxPrice)
-                    .append(" ")
-                    .append(pe.name);
+            sb.append(pe.maxPrice).append(" ").append(pe.name);
             if (pe.lore != null && !pe.lore.isEmpty()) {
                 sb.append("(").append(pe.lore).append(")");
             }
@@ -142,7 +144,7 @@ public class ClientPriceListManager {
                     continue;
                 }
             }
-            // 2) Dopasowanie nazwy – zakładamy, że noColorName zawiera pe.name
+            // 2) Dopasowanie nazwy
             if (!noColorName.toLowerCase().contains(pe.name.toLowerCase())) {
                 continue;
             }
@@ -165,7 +167,7 @@ public class ClientPriceListManager {
     }
 
     /**
-     * Usuwa kody kolorów i formatowanie z podanego ciągu, delegując do ColorStripUtils.
+     * Usuwa kody kolorów i formatowanie z podanego ciągu (używane np. do porównań nazw).
      */
     public static String stripColorsAdvanced(String input) {
         return ColorStripUtils.stripAllColorsAndFormats(input);

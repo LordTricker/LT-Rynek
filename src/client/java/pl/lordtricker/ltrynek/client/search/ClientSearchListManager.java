@@ -17,7 +17,7 @@ import java.util.TimerTask;
 import static pl.lordtricker.ltrynek.client.util.CompositeKeyUtil.createCompositeKey;
 
 public class ClientSearchListManager {
-    // Teraz searchList przechowuje klucze kompozytowe: "baseName|lore|material"
+    // searchList przechowuje klucze kompozytowe: "baseName|lore|material"
     private static final List<String> searchList = new ArrayList<>();
     private static final Map<String, Stats> statsMap = new HashMap<>();
     private static boolean searchActive = false;
@@ -25,8 +25,7 @@ public class ClientSearchListManager {
     private static final Set<String> alreadyCountedSession = new HashSet<>();
 
     /**
-     * Nowa wersja addItem – przyjmuje format:
-     * BazowaNazwa("Lore tekst")["material"]
+     * Dodaje nowy przedmiot do listy wyszukiwania (w formacie bazowaNazwa("Lore")["Material"]).
      */
     public static void addItem(String rawItem) {
         String compositeKey = createCompositeKey(rawItem);
@@ -66,7 +65,7 @@ public class ClientSearchListManager {
                     }
                 });
             }
-        }, 300000); // 5 minut = 300000 ms
+        }, 300_000); // 5 minut = 300000 ms
     }
 
     public static void stopSearch() {
@@ -82,22 +81,18 @@ public class ClientSearchListManager {
     }
 
     /**
-     * Sprawdza, czy dany unikalny klucz już został zliczony w tej sesji.
+     * Sprawdza, czy dany unikalny klucz (np. aukcja) został już zliczony w tej sesji.
      */
     public static boolean isAlreadyCounted(String key) {
         return alreadyCountedSession.contains(key);
     }
 
-    /**
-     * Oznacza dany klucz jako już zliczony.
-     */
     public static void markAsCounted(String key) {
         alreadyCountedSession.add(key);
     }
 
     /**
-     * Aktualizuje statystyki dla danego terminu.
-     * Klucz tutaj to nasz compositeKey.
+     * Aktualizuje statystyki (cena/sztuka, ilość) dla podanego compositeKey.
      */
     public static void updateStats(String compositeKey, double unitPrice, int quantity) {
         Stats s = statsMap.get(compositeKey);
@@ -109,7 +104,7 @@ public class ClientSearchListManager {
     }
 
     public static Stats getStats(String rawItem) {
-        // rawItem tu przyjmujemy w formacie klucza kompozytowego już dodanego
+        // rawItem to już nasz compositeKey
         return statsMap.get(rawItem.toLowerCase());
     }
 
@@ -118,13 +113,7 @@ public class ClientSearchListManager {
     }
 
     /**
-     * Metoda pomocnicza sprawdzająca, czy dany zeskanowany item pasuje do klucza kompozytowego.
-     *
-     * @param compositeKey Klucz w formacie "baseName|lore|material" (wszystko małymi literami)
-     * @param noColorName  nazwa itemu (bez kolorów)
-     * @param loreLines    linie lore (bez kolorów)
-     * @param materialId   identyfikator materiału itemu
-     * @return true, jeśli spełnione są warunki dopasowania
+     * Pomocnicza metoda do sprawdzania, czy zeskanowany item pasuje do compositeKey z listy.
      */
     public static boolean matchesSearchTerm(String compositeKey, String noColorName, List<String> loreLines, String materialId) {
         String[] parts = compositeKey.split("\\|", -1);
