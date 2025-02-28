@@ -1,5 +1,6 @@
 package pl.lordtricker.ltrynek.client.mixin;
 
+import net.minecraft.client.item.TooltipContext;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
@@ -13,9 +14,8 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.ScreenHandlerProvider;
 import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.item.Item;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
@@ -56,7 +56,7 @@ public abstract class HandledScreenMixin {
 			return;
 		}
 		ScreenHandler handler = ((ScreenHandlerProvider<?>) this).getScreenHandler();
-		// Potrzebny dostęp do listy slotów - pamiętaj o Accessor (ScreenHandlerAccessor)
+		// Potrzebny dostęp do listy slotów - pamiętaj o Accessor (ScreenHandlerAccessor).
 		List<Slot> slots = ((ScreenHandlerAccessor) handler).getSlots();
 
 		int matchedCount = 0;
@@ -66,7 +66,7 @@ public abstract class HandledScreenMixin {
 			}
 		}
 
-		// Jeśli włączone są dźwięki w konfiguracji i pojawiły się nowe dopasowania
+		// Jeśli włączone są dźwięki w konfiguracji i liczba dopasowań wzrosła (> 0)
 		if (LtrynekClient.serversConfig != null && LtrynekClient.serversConfig.soundsEnabled) {
 			if (matchedCount != lastMatchedCount && matchedCount > 0) {
 				playAlarmSound(matchedCount);
@@ -90,11 +90,15 @@ public abstract class HandledScreenMixin {
 			return false;
 		}
 
-		// Pobieramy tooltip (bez kolorów)
-		List<Text> tooltip = stack.getTooltip(Item.TooltipContext.DEFAULT, null, TooltipType.BASIC);
+		// W starszych wersjach jest getTooltip(PlayerEntity, boolean).
+		// Drugi parametr (advanced = false) -> zwykły tooltip, bez zaawansowanych informacji.
+		PlayerEntity player = MinecraftClient.getInstance().player;
+		List<Text> tooltip = stack.getTooltip(player, TooltipContext.BASIC);
+
+		// Usuwamy kody kolorów z tooltipu
 		List<String> loreLines = new ArrayList<>();
-		for (Text textLine : tooltip) {
-			String plain = textLine.getString();
+		for (Text line : tooltip) {
+			String plain = line.getString();
 			String noColorLine = ColorStripUtils.stripAllColorsAndFormats(plain);
 			loreLines.add(noColorLine);
 		}
@@ -106,7 +110,7 @@ public abstract class HandledScreenMixin {
 			return false;
 		}
 
-		// Kolory podświetlenia
+		// Kolory podświetlenia z configu
 		String colorStr = entry.highlightColor;
 		String colorStackStr = (entry.highlightColorStack == null || entry.highlightColorStack.isEmpty())
 				? colorStr
@@ -114,7 +118,7 @@ public abstract class HandledScreenMixin {
 		int highlightColor = parseColor(colorStr);
 		int highlightColorStack = parseColor(colorStackStr);
 
-		// Regex do wyłuskania ceny z tooltipu (np. "Cena: 12k" itp.)
+		// Regex do wyłuskania ceny (np. "Cena: 12k")
 		String loreRegex = entry.loreRegex;
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
@@ -135,7 +139,7 @@ public abstract class HandledScreenMixin {
 
 		// Informacje o stacku
 		Identifier id = Registries.ITEM.getId(stack.getItem());
-		String materialId = id.toString();       // np. "minecraft:diamond_sword"
+		String materialId = id.toString(); // np. "minecraft:diamond_sword"
 		String displayName = stack.getName().getString();
 		String noColorName = ColorStripUtils.stripAllColorsAndFormats(displayName);
 
@@ -143,49 +147,46 @@ public abstract class HandledScreenMixin {
 		boolean isStack = (stackSize > 1);
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
-		// --- Obsługa ClientSearchListManager (jeśli searchActive) ---
+		// Obsługa searchList (jeśli aktywna)
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
 				ClientSearchListManager.markAsCounted(uniqueKey);
 
-				// Próbujemy dopasować do każdego "compositeKey" z searchList
+				// Dopasowanie do każdego compositeKey w searchList
 				for (String compositeKey : ClientSearchListManager.getSearchList()) {
 					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
-						// Zliczamy w statystykach
 						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
 			}
 		}
 
-		// --- Obsługa ClientPriceListManager w oparciu o PriceEntry ---
-		// findMatchingPriceEntry: wyszukuje pasujący obiekt PriceEntry (po name, lore, material)
+		// Obsługa PriceListManager – sprawdzamy, czy dany item pasuje do PriceEntry
 		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
 		if (matchedEntry == null) {
-			// Brak wpisu w priceList, więc nie podświetlamy
+			// Brak wpisu w priceList -> nie podświetlamy
 			return false;
 		}
 
 		double maxPrice = matchedEntry.maxPrice;
-		// Jeżeli cena itemu (finalPrice) <= maxPrice z configu, to podświetlamy
+		// Podświetlamy tylko gdy finalPrice <= maxPrice
 		if (finalPrice <= maxPrice) {
 			double ratio = finalPrice / maxPrice;
 			if (ratio > 1.0) ratio = 1.0;
 
-			// Im bliżej maxPrice, tym mniejsza przezroczystość, ale nie schodzimy poniżej 0.3
+			// Im bliżej maxPrice, tym mniejsza przezroczystość
 			double alphaF = 1.0 - 0.75 * ratio;
 			if (alphaF < 0.30) {
 				alphaF = 0.30;
 			}
 			int computedAlpha = (int) (alphaF * 255.0) & 0xFF;
 
-			// Inny kolor dla stacka vs pojedynczego itemu
+			// Kolor stack vs. pojedynczy item
 			int baseRGB = isStack
 					? (highlightColorStack & 0x00FFFFFF)
 					: (highlightColor & 0x00FFFFFF);
 
-			// Tworzymy kolor w formacie ARGB
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
 
 			// Rysujemy overlay w miejscu slota
@@ -239,6 +240,7 @@ public abstract class HandledScreenMixin {
 			timer.schedule(new TimerTask() {
 				@Override
 				public void run() {
+					// Odtwarzanie dźwięku w wątku głównym MC
 					MinecraftClient.getInstance().execute(() -> {
 						MinecraftClient.getInstance().getSoundManager().play(
 								PositionedSoundInstance.master(soundEvent, 1.0F, 1.0F)
@@ -258,24 +260,23 @@ public abstract class HandledScreenMixin {
 
 	/**
 	 * Parsuje cenę z ewentualnym sufiksem (k, m, mld).
-	 * Przykładowo "12k" -> 12000, "5m" -> 5000000, "1.2mld" -> 1_200_000_000 itd.
 	 */
 	private double parsePriceWithSuffix(String raw) {
 		raw = raw.trim().replace(',', '.');
 		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
 
-		// Najpierw sprawdzamy "mld"
+		// "mld"
 		if (lower.endsWith("mld")) {
 			multiplier = 1_000_000_000.0;
 			raw = raw.substring(0, raw.length() - 3);
 		}
-		// Potem "m"
+		// "m"
 		else if (lower.endsWith("m")) {
 			multiplier = 1_000_000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
-		// Następnie "k"
+		// "k"
 		else if (lower.endsWith("k")) {
 			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
@@ -290,7 +291,7 @@ public abstract class HandledScreenMixin {
 	}
 
 	/**
-	 * Wyszukuje w konfigu (serversConfig) wpis ServerEntry pasujący do nazwy profilu.
+	 * Wyszukuje w configu (serversConfig) wpis ServerEntry pasujący do nazwy profilu.
 	 */
 	private ServerEntry findServerEntryByProfile(String profileName) {
 		if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null) {
@@ -305,13 +306,12 @@ public abstract class HandledScreenMixin {
 	}
 
 	/**
-	 * Zamienia np. "#FF00FF" czy "FF00FF" na int ARGB. Jeśli brakuje alpha, ustawia "FF" (pełna nieprzezroczystość).
+	 * Konwersja z "#RRGGBB" czy "RRGGBB" na int ARGB (z domyślną alfą "FF" jeśli brak).
 	 */
 	private int parseColor(String colorStr) {
 		if (colorStr.startsWith("#")) {
 			colorStr = colorStr.substring(1);
 		}
-		// Jeśli mamy tylko 6 znaków, to dopełniamy alpha na początek (FF)
 		if (colorStr.length() == 6) {
 			colorStr = "FF" + colorStr;
 		}
