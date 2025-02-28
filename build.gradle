@@ -35,7 +35,6 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-	implementation("org.bstats:bstats-base:3.1.0")
 	modImplementation fileTree(dir: "libs", include: ["bstats-base-3.1.0.jar"])
 }
 
