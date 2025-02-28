@@ -1,6 +1,7 @@
 package pl.lordtricker.ltrynek.client.mixin;
 
 import pl.lordtricker.ltrynek.client.LtrynekClient;
+import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
@@ -25,6 +26,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -56,6 +59,7 @@ public abstract class HandledScreenMixin {
 			}
 		}
 
+		// Odtwarzanie dźwięku, jeśli jest włączone i zmieniła się liczba trafień
 		if (LtrynekClient.serversConfig != null && LtrynekClient.serversConfig.soundsEnabled) {
 			if (matchedCount != lastMatchedCount && matchedCount > 0) {
 				playAlarmSound(matchedCount);
@@ -68,7 +72,16 @@ public abstract class HandledScreenMixin {
 		ItemStack stack = slot.getStack();
 		if (stack.isEmpty()) return false;
 
+		// 1) Pobieramy tooltip i usuwamy kolory z każdej linii
 		List<Text> tooltip = stack.getTooltip(Item.TooltipContext.DEFAULT, null, TooltipType.BASIC);
+		List<String> loreLines = new ArrayList<>();
+		for (Text textLine : tooltip) {
+			String plain = textLine.getString();
+			String noColor = ColorStripUtils.stripAllColorsAndFormats(plain);
+			loreLines.add(noColor);
+		}
+
+		// 2) Pobieramy informację o serwerze (by wyciągnąć np. loreRegex) - to część Twojego kodu
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
 		if (entry == null) return false;
@@ -81,10 +94,10 @@ public abstract class HandledScreenMixin {
 		int highlightColor = parseColor(colorStr);
 		int highlightColorStack = parseColor(colorStackStr);
 
+		// 3) Wyszukujemy cenę z tooltipu za pomocą loreRegex (tak jak robiłeś wcześniej)
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
-		for (Text textLine : tooltip) {
-			String plain = textLine.getString();
+		for (String plain : loreLines) {
 			Matcher m = pattern.matcher(plain);
 			if (m.find()) {
 				String priceGroup = m.group(1);
@@ -97,6 +110,7 @@ public abstract class HandledScreenMixin {
 		}
 		if (foundPrice < 0) return false;
 
+		// 4) Podstawowe informacje o stacku
 		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
 		String displayName = stack.getName().getString();
@@ -106,35 +120,46 @@ public abstract class HandledScreenMixin {
 		boolean isStack = stackSize > 1;
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
+		// 5) Obsługa systemu searchlist (jeśli aktywny)
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
 				ClientSearchListManager.markAsCounted(uniqueKey);
 				String lowerName = noColorName.toLowerCase();
-				for (String searchTerm : ClientSearchListManager.getSearchList()) {
-					if (lowerName.contains(searchTerm.toLowerCase())) {
-						ClientSearchListManager.updateStats(searchTerm, finalPrice, stackSize);
+				for (String compositeKey : ClientSearchListManager.getSearchList()) {
+					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
+						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
 			}
 		}
 
-		double maxPrice = ClientPriceListManager.getMatchingMaxPrice(noColorName, materialId);
-		if (maxPrice < 0) return false;
+		// 6) Wyszukujemy dopasowany wpis (uwzględniając lore, nazwę i materiał) z PriceList
+		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
+		if (matchedEntry == null) {
+			// Nie znaleziono wpisu pasującego do nazwy, lore i/lub materiału
+			return false;
+		}
 
+		double maxPrice = matchedEntry.maxPrice;
 		if (finalPrice <= maxPrice) {
 			double ratio = finalPrice / maxPrice;
 			if (ratio > 1.0) ratio = 1.0;
 			double alphaF = 1.0 - 0.75 * ratio;
 			if (alphaF < 0.30) alphaF = 0.30;
 			int computedAlpha = (int) (alphaF * 255.0) & 0xFF;
+
+			// Kolor dla stacka vs. pojedynczego itemu
 			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF) : (highlightColor & 0x00FFFFFF);
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
+
+			// Rysujemy półprzezroczysty overlay
 			int realX = this.x + slot.x;
 			int realY = this.y + slot.y;
 			context.fill(realX, realY, realX + 16, realY + 16, dynamicColor);
 			return true;
 		}
+
 		return false;
 	}
 

@@ -26,12 +26,29 @@ public class ConfigLoader {
         }
 
         try (Reader reader = Files.newBufferedReader(configFile)) {
-            return GSON.fromJson(reader, ServersConfig.class);
+            ServersConfig config = GSON.fromJson(reader, ServersConfig.class);
+            // Post-process: ustaw domyślne wartości dla nowych pól, jeśli są null
+            if (config != null && config.servers != null) {
+                for (ServerEntry server : config.servers) {
+                    if (server.prices != null) {
+                        for (PriceEntry pe : server.prices) {
+                            if (pe.lore == null) {
+                                pe.lore = "";
+                            }
+                            if (pe.material == null) {
+                                pe.material = "";
+                            }
+                        }
+                    }
+                }
+            }
+            return config;
         } catch (IOException e) {
             e.printStackTrace();
             return new ServersConfig();
         }
     }
+
 
     public static void saveConfig(ServersConfig config) {
         Path configDir = FabricLoader.getInstance().getConfigDir();
@@ -137,4 +154,5 @@ public class ConfigLoader {
 
         return cfg;
     }
+
 }
