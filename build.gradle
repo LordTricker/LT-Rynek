@@ -11,7 +11,6 @@ base {
 }
 
 repositories {
-	maven { url "https://repo.bstats.org/repository/maven-public/" }
 	maven { url "https://maven.fabricmc.net/" }
 	mavenCentral()
 }
@@ -33,11 +32,11 @@ dependencies {
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
-	modImplementation "org.bstats:bstats-fabric:1.8.0"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-	implementation 'com.google.code.gson:gson:2.10.1'
+	implementation("org.bstats:bstats-base:3.1.0")
+	modImplementation fileTree(dir: "libs", include: ["bstats-base-3.1.0.jar"])
 }
 
 processResources {
