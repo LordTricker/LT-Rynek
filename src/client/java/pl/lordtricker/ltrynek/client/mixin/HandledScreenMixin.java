@@ -1,11 +1,6 @@
 package pl.lordtricker.ltrynek.client.mixin;
 
-import pl.lordtricker.ltrynek.client.LtrynekClient;
-import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
-import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
-import pl.lordtricker.ltrynek.client.config.ServerEntry;
-import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
-import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.util.math.MatrixStack;
@@ -15,15 +10,23 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.PositionedSoundInstance;
-import net.minecraft.sound.SoundEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import pl.lordtricker.ltrynek.client.LtrynekClient;
+import pl.lordtricker.ltrynek.client.config.PriceEntry;
+import pl.lordtricker.ltrynek.client.config.ServerEntry;
+import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
+import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.sound.SoundEvent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.regex.Matcher;
@@ -32,33 +35,15 @@ import java.util.regex.Pattern;
 @Mixin(HandledScreen.class)
 public abstract class HandledScreenMixin extends DrawableHelper {
 
-	// Statyczne liczniki trafień – resetowane co klatkę
+	// Statyczne liczniki trafień – resetowane co klatkę (stary sposób)
 	private static int matchedCount = 0;
 	private static int lastMatchedCount = 0;
 
-	// Parsowanie ceny z sufiksami, dodana obsługa "mld"
-	private double parsePriceWithSuffix(String raw) {
-		raw = raw.trim().replace(',', '.');
-		String lower = raw.toLowerCase();
-		double multiplier = 1.0;
-		if (lower.endsWith("mld")) {
-			multiplier = 1_000_000_000.0;
-			raw = raw.substring(0, raw.length() - 3);
-		} else if (lower.endsWith("m") || lower.endsWith("M")) {
-			multiplier = 1_000_000.0;
-			raw = raw.substring(0, raw.length() - 1);
-		} else if (lower.endsWith("k") || lower.endsWith("K")) {
-			multiplier = 1000.0;
-			raw = raw.substring(0, raw.length() - 1);
-		}
-		try {
-			double base = Double.parseDouble(raw);
-			return base * multiplier;
-		} catch (NumberFormatException e) {
-			return -1;
-		}
-	}
-
+	/**
+	 * Iniekcja do metody drawSlot – rysowanie odbywa się w stylu 1.19.4,
+	 * a pobieranie lore odbywa się z NBT.
+	 * Reszta logiki (maxPrice, searchList) działa wg. nowej wersji.
+	 */
 	@Inject(method = "drawSlot", at = @At("HEAD"))
 	private void onDrawSlot(MatrixStack matrices, Slot slot, CallbackInfo ci) {
 		if (!ToggleScanner.scanningEnabled) return;
@@ -67,6 +52,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
 		if (entry == null) return;
 
+		// Konfiguracja z profilu
 		String loreRegex = entry.loreRegex;
 		String colorStr = entry.highlightColor;
 		String colorStackStr = (entry.highlightColorStack == null || entry.highlightColorStack.isEmpty())
@@ -76,11 +62,16 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		int highlightColorStack = parseColor(colorStackStr);
 
 		ItemStack stack = slot.getStack();
-		if (stack.isEmpty() || !stack.hasNbt()) return;
+		if (stack.isEmpty()) return;
+
+		// Pobieramy lore z NBT – jak w 1.19.4
+		if (!stack.hasNbt()) return;
 		NbtCompound display = stack.getSubNbt("display");
 		if (display == null || !display.contains("Lore", 9)) return;
 		NbtList loreList = display.getList("Lore", 8);
 
+		// Przygotowujemy listę linii lore (bez kodów kolorów)
+		List<String> loreLines = new ArrayList<>();
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
 		for (int i = 0; i < loreList.size(); i++) {
@@ -88,19 +79,23 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			Text textLine = Text.Serializer.fromJson(loreJson);
 			if (textLine != null) {
 				String plain = textLine.getString();
-				Matcher m = pattern.matcher(plain);
+				String noColorLine = ColorStripUtils.stripAllColorsAndFormats(plain);
+				loreLines.add(noColorLine);
+				// Szukamy ceny przy pomocy regexa
+				Matcher m = pattern.matcher(noColorLine);
 				if (m.find()) {
 					String priceGroup = m.group(1);
 					double parsedPrice = parsePriceWithSuffix(priceGroup);
 					if (parsedPrice >= 0) {
 						foundPrice = parsedPrice;
-						break;
+						// Nie przerywamy pętli, by zebrać pełną listę loreLines do searchList
 					}
 				}
 			}
 		}
 		if (foundPrice < 0) return;
 
+		// Pobieramy dane przedmiotu
 		Identifier id = Registry.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
 		String displayName = stack.getName().getString();
@@ -108,42 +103,43 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 
 		int stackSize = stack.getCount();
 		boolean isStack = stackSize > 1;
-		double finalPrice = foundPrice;
-		if (isStack) {
-			finalPrice = foundPrice / stackSize;
-		}
+		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
-		// Aktualizacja statystyk searchlist, jeśli wyszukiwanie jest aktywne
+		// Aktualizacja searchList – logika wg. nowej wersji
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
 				ClientSearchListManager.markAsCounted(uniqueKey);
-				String lowerName = noColorName.toLowerCase();
-				for (String searchTerm : ClientSearchListManager.getSearchList()) {
-					if (lowerName.contains(searchTerm.toLowerCase())) {
-						ClientSearchListManager.updateStats(searchTerm, finalPrice, stackSize);
+				for (String compositeKey : ClientSearchListManager.getSearchList()) {
+					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
+						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
 			}
 		}
 
-		double maxPrice = ClientPriceListManager.getMatchingMaxPrice(noColorName, materialId);
-		if (maxPrice < 0) return;
+		// Pobieramy maxPrice wg. nowej logiki
+		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
+		if (matchedEntry == null) return;
+		double maxPrice = matchedEntry.maxPrice;
 
+		// Stary sposób rysowania – podświetlenie slotu
 		if (finalPrice <= maxPrice) {
 			double ratio = finalPrice / maxPrice;
 			if (ratio > 1.0) ratio = 1.0;
 			double alphaF = 1.0 - 0.75 * ratio;
 			if (alphaF < 0.50) alphaF = 0.50;
-			int computedAlpha = (int)(alphaF * 255.0) & 0xFF;
-			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF)
-					: (highlightColor & 0x00FFFFFF);
+			int computedAlpha = (int) (alphaF * 255.0) & 0xFF;
+			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF) : (highlightColor & 0x00FFFFFF);
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
 			fill(matrices, slot.x, slot.y, slot.x + 16, slot.y + 16, dynamicColor);
-			matchedCount++; // Zwiększamy licznik trafień
+			matchedCount++; // zwiększamy licznik trafień (używany do alarmu)
 		}
 	}
 
+	/**
+	 * Iniekcja do metody render – wywołanie alarmu dźwiękowego.
+	 */
 	@Inject(method = "render", at = @At("TAIL"))
 	private void onRender(MatrixStack matrices, int mouseX, int mouseY, float delta, CallbackInfo ci) {
 		if (!ToggleScanner.scanningEnabled) return;
@@ -153,7 +149,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			}
 		}
 		lastMatchedCount = matchedCount;
-		matchedCount = 0; // Reset licznika po renderze
+		matchedCount = 0; // reset licznika po renderze
 	}
 
 	private void playAlarmSound(int count) {
@@ -201,6 +197,34 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		}, initialDelay + times * interval + 50);
 	}
 
+	/**
+	 * Parsowanie ceny z sufiksami (np. k, m, mld).
+	 */
+	private double parsePriceWithSuffix(String raw) {
+		raw = raw.trim().replace(',', '.');
+		String lower = raw.toLowerCase();
+		double multiplier = 1.0;
+		if (lower.endsWith("mld")) {
+			multiplier = 1_000_000_000.0;
+			raw = raw.substring(0, raw.length() - 3);
+		} else if (lower.endsWith("m")) {
+			multiplier = 1_000_000.0;
+			raw = raw.substring(0, raw.length() - 1);
+		} else if (lower.endsWith("k")) {
+			multiplier = 1000.0;
+			raw = raw.substring(0, raw.length() - 1);
+		}
+		try {
+			double base = Double.parseDouble(raw);
+			return base * multiplier;
+		} catch (NumberFormatException e) {
+			return -1;
+		}
+	}
+
+	/**
+	 * Wyszukiwanie konfiguracji serwera na podstawie profilu.
+	 */
 	private ServerEntry findServerEntryByProfile(String profileName) {
 		if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null)
 			return null;
@@ -212,6 +236,9 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		return null;
 	}
 
+	/**
+	 * Parsowanie koloru z opcjonalnym "#" i dodaniem alfa, jeśli potrzeba.
+	 */
 	private int parseColor(String colorStr) {
 		if (colorStr.startsWith("#")) {
 			colorStr = colorStr.substring(1);
