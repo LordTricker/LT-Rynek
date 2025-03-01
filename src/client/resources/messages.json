@@ -2,11 +2,12 @@
   "mod.info": [
     " ",
     "&8[&3L&bT &fRynek&8] &7Mod LT-Rynek by LordTricker",
+    "&8- &fDołącz do discord&8: &3https://dc.ltmods.pl/",
     "&8- &fMoj GitHub&8: &3https://github.com/LordTricker/LT-Rynek",
     "&8- &fChcesz wesprzec? &3https://tipply.pl/@lordtricker",
     " ",
     " &6| &eConfig zostal wygenerowany w miejscu:",
-    " &6| &e%appdata%/.minecraft/config/&6ltrynek-profiles.json",
+    " &6| &e%appdata%/.minecraft/config/&6ltrynek-config.json",
     " ",
     "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
     " "
@@ -42,6 +43,7 @@
   "command.help": [
     "&8[&3L&bT &fRynek&8] &7Mod LT-Rynek by LordTricker",
     "&8- &fChcesz wesprzec? &3https://tipply.pl/@lordtricker",
+    "&8- &fDołącz do discord&8: &3https://dc.ltmods.pl/",
     " ",
     "&8[&3L&bT &fRynek&8] &7Dostepne komendy:",
     "&8- &f/ltr &8- &7Informacje o modzie i aktywnym profilu",
@@ -50,16 +52,17 @@
     "&8- &f/ltr remove <przedmiot> &8- &7Usuwa przedmiot z profilu",
     "&8- &f/ltr list &8- &7Wyswietla przedmioty profilu",
     "&8- &f/ltr sounds &8- &7Wlacza/wyłącza alarmy dźwiękowe",
-    "&8- &f/ltr searchlist add <przedmiot> &8- &7Dodaje przedmiot do listy wyszukiwania",
-    "&8- &f/ltr searchlist remove <przedmiot> &8- &7Usuwa przedmiot z listy wyszukiwania",
-    "&8- &f/ltr searchlist list &8- &7Wyświetla listę wyszukiwanych przedmiotów",
-    "&8- &f/ltr searchlist start &8- &7Rozpoczyna zliczanie przedmiotow",
-    "&8- &f/ltr searchlist start &8- &7Podsumowuje zliczone przedmioty",
+    "&8- &f/ltr search add <przedmiot> &8- &7Dodaje przedmiot do listy wyszukiwania",
+    "&8- &f/ltr search remove <przedmiot> &8- &7Usuwa przedmiot z listy wyszukiwania",
+    "&8- &f/ltr search list &8- &7Wyświetla listę wyszukiwanych przedmiotów",
+    "&8- &f/ltr search start &8- &7Rozpoczyna zliczanie przedmiotow",
+    "&8- &f/ltr search start &8- &7Podsumowuje zliczone przedmioty",
     "&8- &f/ltr pomoc &8- &7Lista komend",
     "&8- &f/ltr config save &8- &7Zapisuje wszystko do configu",
     "&8- &f/ltr config reload &8- &7Przeladowuje dane z configu",
     " ",
     "&8[&3L&bT &fRynek&8] &aCtrl &f+ &aR &8- &7Aby wlaczyc szukanie",
+    "&8[&3L&bT &fRynek&8] &7albo &f/ltr scan",
     " ",
     " &6| &eConfig zostal wygenerowany w miejscu:",
     " &6| &e%appdata%/.minecraft/config/&6ltrynek-config.json",
@@ -69,6 +72,7 @@
     " ",
     "&8[&3L&bT &fRynek&8] &fWitaj na serwerze!",
     "&8[&3L&bT &fRynek&8] &fLT-Rynek Mod &7jest &aaktywny.",
+    "&8- &fDołącz do discord&8: &3https://dc.ltmods.pl/",
     " ",
     "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
     " "
@@ -168,7 +172,7 @@
     " ",
     "&8[&3L&bT &fRynek&8] &aRozpoczeto &7zliczanie &fwyswietlonych &7przedmiotow",
     "&8- &7Otworz &frynek &7i przewertuj strony, a ja zajme sie reszta.",
-    "&8- &7Po zakonczeniu wpisz &f/ltr searchlist stop &7aby poznac statysyki",
+    "&8- &7Po zakonczeniu wpisz &f/ltr search stop &7aby poznac statysyki",
     " ",
     "&6| &ePo 5 minutach sam zatrzymam zliczanie",
     " "
@@ -179,7 +183,9 @@
     "&8[&3L&bT &fRynek&8] &7Oto co udalo mi sie ustalic:"
   ],
   "command.searchlist.stop.line": [
-    "&8- &f%item%&8(&b%count%&8): &fminCena: &a%min%, &fmaxCena: &2%max%, &fśrednia: &e%avg%"
+    "&8- &f%item%&8(&b%count%&8):",
+    "   &fmin: &a%min%&7, &fmax: &2%max%&7, &fśrednia: &e%avg%",
+    "   &fmediana: &d%median%&7, &fQ1: &3%quartile1%&7, &fQ3: &9%quartile3%"
   ],
   "command.searchlist.list.header": [
     " ",

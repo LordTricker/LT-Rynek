@@ -1,33 +1,38 @@
 package pl.lordtricker.ltrynek.client.command;
 
-import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
-import pl.lordtricker.ltrynek.client.util.ColorUtils;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
+import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
+import pl.lordtricker.ltrynek.client.util.ColorUtils;
+import pl.lordtricker.ltrynek.client.util.CompositeKeyUtil;
 import pl.lordtricker.ltrynek.client.util.Messages;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.util.PriceFormatter;
+
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
+
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
-import pl.lordtricker.ltrynek.client.util.PriceFormatter;
 
+import java.util.List;
 import java.util.Map;
 
 public class ClientCommandRegistration {
 
     public static void registerCommands() {
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
-                registerLtrynekCommand(dispatcher, registryAccess));
+        ClientCommandRegistrationCallback.EVENT.register(ClientCommandRegistration::registerLtrynekCommand);
     }
 
     private static void registerLtrynekCommand(
@@ -36,7 +41,7 @@ public class ClientCommandRegistration {
     ) {
         dispatcher.register(
                 ClientCommandManager.literal("ltr")
-                        // /ltr – wyświetlenie informacji o aktualnym profilu
+                        // /ltr – wyświetlenie informacji o aktywnym profilu
                         .executes(ctx -> {
                             String activeProfile = ClientPriceListManager.getActiveProfile();
                             String message = Messages.format("mod.info", Map.of("profile", activeProfile));
@@ -44,7 +49,20 @@ public class ClientCommandRegistration {
                             return 1;
                         })
 
-                        // /ltr defaultprofile <profile>
+                        // ========== /ltr scan ==========
+                        .then(ClientCommandManager.literal("scan")
+                                .executes(ctx -> {
+                                    ToggleScanner.scanningEnabled = !ToggleScanner.scanningEnabled;
+                                    String msgKey = ToggleScanner.scanningEnabled
+                                            ? "command.scanner.toggle.on"
+                                            : "command.scanner.toggle.off";
+                                    String msg = Messages.get(msgKey);
+                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                    return 1;
+                                })
+                        )
+
+                        // ========== /ltr defaultprofile <profile> ==========
                         .then(ClientCommandManager.literal("defaultprofile")
                                 .then(ClientCommandManager.argument("profile", StringArgumentType.word())
                                         .executes(ctx -> {
@@ -57,7 +75,7 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr profiles – listowanie dostępnych profili
+                        // ========== /ltr profiles ==========
                         .then(ClientCommandManager.literal("profiles")
                                 .executes(ctx -> {
                                     String allProfiles = ClientPriceListManager.listProfiles();
@@ -80,7 +98,7 @@ public class ClientCommandRegistration {
                                 })
                         )
 
-                        // /ltr profile <profile>
+                        // ========== /ltr profile <profile> ==========
                         .then(ClientCommandManager.literal("profile")
                                 .then(ClientCommandManager.argument("profile", StringArgumentType.word())
                                         .executes(ctx -> {
@@ -93,13 +111,26 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr add <maxPrice> <itemName>
+                        // ========== /ltr add <maxPrice> <itemName> ==========
                         .then(ClientCommandManager.literal("add")
                                 .then(ClientCommandManager.argument("maxPrice", StringArgumentType.word())
                                         .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
+                                                // Sugestie zachowane – kompatybilne z niższą wersją
+                                                .suggests((context, builder) -> {
+                                                    String remaining = builder.getRemaining().toLowerCase();
+                                                    if (remaining.contains("minecraft:")) {
+                                                        Iterable<net.minecraft.util.Identifier> allItemIds = net.minecraft.util.registry.Registry.ITEM.getIds();
+                                                        for (net.minecraft.util.Identifier itemId : allItemIds) {
+                                                            String asString = itemId.toString();
+                                                            if (asString.contains(remaining)) {
+                                                                builder.suggest(asString);
+                                                            }
+                                                        }
+                                                    }
+                                                    return builder.buildFuture();
+                                                })
                                                 .executes(ctx -> {
                                                     String maxPriceStr = StringArgumentType.getString(ctx, "maxPrice");
-                                                    // Parsujemy wpisaną cenę (np. "10k" lub "100000")
                                                     double parsedPrice = PriceFormatter.parsePrice(maxPriceStr);
                                                     if (parsedPrice < 0) {
                                                         ctx.getSource().sendError(Text.literal("Invalid price format: " + maxPriceStr));
@@ -108,7 +139,6 @@ public class ClientCommandRegistration {
                                                     String itemName = StringArgumentType.getString(ctx, "itemName");
                                                     String activeProfile = ClientPriceListManager.getActiveProfile();
                                                     ClientPriceListManager.addPriceEntry(itemName, parsedPrice);
-                                                    // Wyświetlamy cenę w skróconej formie, np. "1.50k"
                                                     String shortPrice = PriceFormatter.formatPrice(parsedPrice);
                                                     String msg = Messages.format("command.add.success", Map.of(
                                                             "item", itemName,
@@ -122,7 +152,7 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr remove <itemName>
+                        // ========== /ltr remove <itemName> ==========
                         .then(ClientCommandManager.literal("remove")
                                 .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
                                         .executes(ctx -> {
@@ -139,11 +169,15 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr list
+                        // ========== /ltr list ==========
                         .then(ClientCommandManager.literal("list")
                                 .executes(ctx -> {
                                     String activeProfile = ClientPriceListManager.getActiveProfile();
                                     String listRaw = ClientPriceListManager.getPriceListAsString();
+                                    if (listRaw.startsWith("No items in profile")) {
+                                        ctx.getSource().sendFeedback(Text.literal(listRaw));
+                                        return 1;
+                                    }
                                     String[] lines = listRaw.split("\n");
                                     MutableText finalText = Text.empty();
                                     for (String line : lines) {
@@ -161,7 +195,8 @@ public class ClientCommandRegistration {
                                                                 ClickEvent.Action.SUGGEST_COMMAND,
                                                                 "/ltr add " + priceStr + " " + itemName))
                                                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                                                Text.literal("Kliknij aby zedytować " + itemName))));
+                                                                Text.literal("Kliknij aby zedytować " + itemName)))
+                                        );
                                         // Ikona usuwania
                                         String removeIconStr = Messages.get("pricelist.icon.remove");
                                         MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
@@ -170,7 +205,8 @@ public class ClientCommandRegistration {
                                                                 ClickEvent.Action.RUN_COMMAND,
                                                                 "/ltr remove " + itemName))
                                                         .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                                                Text.literal("Kliknij aby usunąć " + itemName))));
+                                                                Text.literal("Kliknij aby usunąć " + itemName)))
+                                        );
                                         String itemLineStr = Messages.format("pricelist.item_line", Map.of("item", itemName, "price", shortPrice));
                                         MutableText itemLine = (MutableText) ColorUtils.translateColorCodes(itemLineStr);
                                         MutableText lineText = Text.empty()
@@ -187,7 +223,7 @@ public class ClientCommandRegistration {
                                 })
                         )
 
-                        // /ltr pomoc
+                        // ========== /ltr pomoc ==========
                         .then(ClientCommandManager.literal("pomoc")
                                 .executes(ctx -> {
                                     String msg = Messages.get("command.help");
@@ -196,7 +232,7 @@ public class ClientCommandRegistration {
                                 })
                         )
 
-                        // /ltr config (save, reload)
+                        // ========== /ltr config (save, reload) ==========
                         .then(ClientCommandManager.literal("config")
                                 .then(ClientCommandManager.literal("save")
                                         .executes(ctx -> {
@@ -219,7 +255,7 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr sounds (on, off)
+                        // ========== /ltr sounds (on, off) ==========
                         .then(ClientCommandManager.literal("sounds")
                                 .executes(ctx -> {
                                     boolean current = LtrynekClient.serversConfig.soundsEnabled;
@@ -247,30 +283,48 @@ public class ClientCommandRegistration {
                                 )
                         )
 
-                        // /ltr searchlist (add, remove, start, stop, list)
-                        .then(ClientCommandManager.literal("searchlist")
+                        // ========== /ltr search (add, remove, start, stop, list) ==========
+                        .then(ClientCommandManager.literal("search")
+                                // /ltr search add <item> – z sugestiami
                                 .then(ClientCommandManager.literal("add")
                                         .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
+                                                .suggests((context, builder) -> {
+                                                    String remaining = builder.getRemaining().toLowerCase();
+                                                    if (remaining.contains("minecraft:")) {
+                                                        Iterable<net.minecraft.util.Identifier> allItemIds = net.minecraft.util.registry.Registry.ITEM.getIds();
+                                                        for (net.minecraft.util.Identifier itemId : allItemIds) {
+                                                            String asString = itemId.toString();
+                                                            if (asString.contains(remaining)) {
+                                                                builder.suggest(asString);
+                                                            }
+                                                        }
+                                                    }
+                                                    return builder.buildFuture();
+                                                })
                                                 .executes(ctx -> {
-                                                    String item = StringArgumentType.getString(ctx, "item");
-                                                    ClientSearchListManager.addItem(item);
-                                                    String msg = Messages.format("command.searchlist.add", Map.of("item", item));
+                                                    String rawItem = StringArgumentType.getString(ctx, "item");
+                                                    ClientSearchListManager.addItem(rawItem);
+                                                    String msg = Messages.format("command.searchlist.add", Map.of("item", rawItem));
                                                     ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
                                                     return 1;
                                                 })
                                         )
                                 )
+                                // /ltr search remove <item>
                                 .then(ClientCommandManager.literal("remove")
                                         .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
                                                 .executes(ctx -> {
-                                                    String item = StringArgumentType.getString(ctx, "item");
-                                                    ClientSearchListManager.removeItem(item);
-                                                    String msg = Messages.format("command.searchlist.remove", Map.of("item", item));
+                                                    String rawItem = StringArgumentType.getString(ctx, "item");
+                                                    ClientSearchListManager.removeItem(rawItem);
+                                                    String friendly = CompositeKeyUtil.getFriendlyName(
+                                                            CompositeKeyUtil.createCompositeKey(rawItem));
+                                                    String msg = Messages.format("command.searchlist.remove", Map.of("item", friendly));
                                                     ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
                                                     return 1;
                                                 })
                                         )
                                 )
+                                // /ltr search start
                                 .then(ClientCommandManager.literal("start")
                                         .executes(ctx -> {
                                             ClientSearchListManager.startSearch();
@@ -279,6 +333,7 @@ public class ClientCommandRegistration {
                                             return 1;
                                         })
                                 )
+                                // /ltr search stop – z pełnymi statystykami (min, max, avg, median, Q1, Q3)
                                 .then(ClientCommandManager.literal("stop")
                                         .executes(ctx -> {
                                             ClientSearchListManager.stopSearch();
@@ -291,15 +346,19 @@ public class ClientCommandRegistration {
                                             MutableText finalText = Text.empty();
                                             String headerRaw = Messages.get("command.searchlist.stop.header");
                                             finalText.append(ColorUtils.translateColorCodes(headerRaw)).append(Text.literal("\n"));
-                                            for (String item : searchItems) {
-                                                ClientSearchListManager.Stats stats = ClientSearchListManager.getStats(item);
+                                            for (String compositeKey : searchItems) {
+                                                ClientSearchListManager.Stats stats = ClientSearchListManager.getStats(compositeKey);
                                                 if (stats == null || stats.getCount() == 0) continue;
+                                                String friendlyName = CompositeKeyUtil.getFriendlyName(compositeKey);
                                                 String lineRaw = Messages.format("command.searchlist.stop.line", Map.of(
-                                                        "item", item,
+                                                        "item", friendlyName,
                                                         "count", String.valueOf(stats.getCount()),
                                                         "min", PriceFormatter.formatPrice(stats.getMin()),
                                                         "max", PriceFormatter.formatPrice(stats.getMax()),
-                                                        "avg", PriceFormatter.formatPrice(stats.getAverage())
+                                                        "avg", PriceFormatter.formatPrice(stats.getAverage()),
+                                                        "median", PriceFormatter.formatPrice(stats.getMedian()),
+                                                        "quartile1", PriceFormatter.formatPrice(stats.getQuartile1()),
+                                                        "quartile3", PriceFormatter.formatPrice(stats.getQuartile3())
                                                 ));
                                                 finalText.append(ColorUtils.translateColorCodes(lineRaw)).append(Text.literal("\n"));
                                             }
@@ -307,6 +366,7 @@ public class ClientCommandRegistration {
                                             return 1;
                                         })
                                 )
+                                // /ltr search list
                                 .then(ClientCommandManager.literal("list")
                                         .executes(ctx -> {
                                             java.util.List<String> searchItems = ClientSearchListManager.getSearchList();
@@ -318,16 +378,15 @@ public class ClientCommandRegistration {
                                             String header = Messages.get("command.searchlist.list.header");
                                             MutableText finalText = (MutableText) ColorUtils.translateColorCodes(header);
                                             finalText.append(Text.literal("\n"));
-                                            for (String item : searchItems) {
-                                                String lineTemplate = Messages.format("command.searchlist.list.line", Map.of("item", item));
+                                            for (String compositeKey : searchItems) {
+                                                String friendly = CompositeKeyUtil.getFriendlyName(compositeKey);
+                                                String lineTemplate = Messages.format("command.searchlist.list.line", Map.of("item", friendly));
                                                 MutableText lineText = (MutableText) ColorUtils.translateColorCodes(lineTemplate);
                                                 Style clickableStyle = Style.EMPTY.withClickEvent(new ClickEvent(
                                                                 ClickEvent.Action.RUN_COMMAND,
-                                                                "/ltr searchlist remove " + item))
-                                                        .withHoverEvent(new HoverEvent(
-                                                                HoverEvent.Action.SHOW_TEXT,
-                                                                Text.literal(Messages.get("command.searchlist.list.remove.hover"))
-                                                        ));
+                                                                "/ltr search remove " + friendly))
+                                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                                                Text.literal(Messages.get("command.searchlist.list.remove.hover"))));
                                                 lineText.setStyle(clickableStyle);
                                                 finalText.append(lineText).append(Text.literal("\n"));
                                             }
@@ -340,27 +399,23 @@ public class ClientCommandRegistration {
     }
 
     /**
-     * Synchronizuje dane z pamięci (ClientPriceListManager) do obiektu LtrynekClient.serversConfig,
-     * tak aby /ltrynek config save mógł zapisać te zmiany do pliku.
+     * Synchronizuje dane z pamięci (ClientPriceListManager) do konfiguracji (LtrynekClient.serversConfig)
+     * zgodnie z logiką nowszej wersji.
      */
     private static void syncMemoryToConfig() {
         for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
             entry.prices.clear();
         }
-        Map<String, Map<String, Double>> allProfiles = ClientPriceListManager.getAllProfiles();
-        for (Map.Entry<String, Map<String, Double>> profEntry : allProfiles.entrySet()) {
+        // Przyjmujemy, że profile są przechowywane jako Map<String, Map<String, Double>>
+        Map<String, List<PriceEntry>> allProfiles = ClientPriceListManager.getAllProfiles();
+        for (Map.Entry<String, List<PriceEntry>> profEntry : allProfiles.entrySet()) {
             String profileName = profEntry.getKey();
-            Map<String, Double> items = profEntry.getValue();
-
+            Map<String, Double> items = (Map<String, Double>) profEntry.getValue();
             ServerEntry se = findServerEntryByProfile(profileName);
-            if (se == null) {
-                continue;
-            }
-
+            if (se == null) continue;
             for (Map.Entry<String, Double> itemEntry : items.entrySet()) {
                 String itemName = itemEntry.getKey();
                 double maxPrice = itemEntry.getValue();
-
                 PriceEntry pe = new PriceEntry();
                 pe.name = itemName;
                 pe.maxPrice = maxPrice;
@@ -370,7 +425,7 @@ public class ClientCommandRegistration {
     }
 
     /**
-     * Czyści i na nowo inicjalizuje ClientPriceListManager z LtrynekClient.serversConfig.
+     * Czyści i na nowo inicjalizuje profile w ClientPriceListManager na podstawie konfiguracji.
      */
     private static void reinitProfilesFromConfig() {
         for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
@@ -383,7 +438,7 @@ public class ClientCommandRegistration {
     }
 
     /**
-     * Znajduje ServerEntry w LtrynekClient.serversConfig dla danego profileName.
+     * Znajduje ServerEntry o podanej nazwie profilu w konfiguracji.
      */
     private static ServerEntry findServerEntryByProfile(String profileName) {
         for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
