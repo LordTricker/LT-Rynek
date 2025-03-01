@@ -1,5 +1,8 @@
 package pl.lordtricker.ltrynek.client;
 
+import com.mojang.brigadier.CommandDispatcher;
+import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
 import pl.lordtricker.ltrynek.client.command.ClientCommandRegistration;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
@@ -9,12 +12,9 @@ import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
-import net.fabricmc.fabric.api.client.command.v1.ClientCommandManager;
-import net.fabricmc.fabric.api.client.command.v1.FabricClientCommandSource;
-import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.client.MinecraftClient;
-import pl.lordtricker.ltrynek.client.util.Messages;
 import pl.lordtricker.ltrynek.client.util.ColorUtils;
+import pl.lordtricker.ltrynek.client.util.Messages;
 
 import java.util.Map;
 
@@ -23,22 +23,19 @@ public class LtrynekClient implements ClientModInitializer {
 
 	@Override
 	public void onInitializeClient() {
-		// Inicjalizacja keybindingów
 		ToggleScanner.init();
 
-		// Ładujemy konfigurację
 		serversConfig = ConfigLoader.loadConfig();
 
-		// Wczytujemy profile i dodajemy wpisy cenowe
 		for (ServerEntry entry : serversConfig.servers) {
 			ClientPriceListManager.setActiveProfile(entry.profileName);
 			for (PriceEntry pe : entry.prices) {
 				ClientPriceListManager.addPriceEntry(pe.name, pe.maxPrice);
 			}
 		}
+
 		ClientPriceListManager.setActiveProfile(serversConfig.defaultProfile);
 
-		// Rejestrujemy event do połączenia z serwerem
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 			String address = getServerAddress();
 			ServerEntry entry = findServerEntry(address);
@@ -58,38 +55,23 @@ public class LtrynekClient implements ClientModInitializer {
 			}
 		});
 
-		// Rejestrujemy komendy klienta
 		CommandDispatcher<FabricClientCommandSource> dispatcher = ClientCommandManager.DISPATCHER;
 		ClientCommandRegistration.registerCommands(dispatcher);
 	}
 
-	private String getServerAddress() {
+	public static String getServerAddress() {
 		if (MinecraftClient.getInstance().getCurrentServerEntry() != null) {
 			return MinecraftClient.getInstance().getCurrentServerEntry().address;
 		}
 		return "singleplayer";
 	}
 
-	private ServerEntry findServerEntry(String address) {
+	public static ServerEntry findServerEntry(String address) {
 		for (ServerEntry entry : serversConfig.servers) {
 			for (String domain : entry.domains) {
-				if (address.contains(domain)) {
+				if (address.equalsIgnoreCase(domain) ||
+						address.toLowerCase().endsWith("." + domain.toLowerCase())) {
 					return entry;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Zwraca wpis konfiguracyjny dla aktywnego profilu.
-	 */
-	public static ServerEntry getServerEntryForActiveProfile() {
-		String activeProfile = ClientPriceListManager.getActiveProfile();
-		if (serversConfig != null && serversConfig.servers != null) {
-			for (ServerEntry se : serversConfig.servers) {
-				if (se.profileName.equals(activeProfile)) {
-					return se;
 				}
 			}
 		}

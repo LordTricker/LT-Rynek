@@ -18,7 +18,7 @@ public class ColorUtils {
         for (int i = 0; i < chars.length; i++) {
             char c = chars[i];
             if (c == '&' && i + 1 < chars.length) {
-                if (currentSegment.length() > 0) {
+                if (!currentSegment.isEmpty()) {
                     MutableText segment = (MutableText) Text.of(currentSegment.toString());
                     segment.setStyle(currentStyle);
                     result.append(segment);
@@ -30,7 +30,7 @@ public class ColorUtils {
                 currentSegment.append(c);
             }
         }
-        if (currentSegment.length() > 0) {
+        if (!currentSegment.isEmpty()) {
             MutableText segment = (MutableText) Text.of(currentSegment.toString());
             segment.setStyle(currentStyle);
             result.append(segment);
