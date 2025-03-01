@@ -7,7 +7,6 @@ import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
 import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
 import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
-
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -22,7 +21,6 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -46,17 +44,12 @@ public abstract class HandledScreenMixin {
 
 	private int lastMatchedCount = 0;
 
-	/**
-	 * Metoda wywoływana po wyrenderowaniu ekranu. Tu wykonujemy skanowanie slotów
-	 * w ekwipunku/GUI i ewentualne podświetlanie.
-	 */
 	@Inject(method = "render", at = @At("TAIL"))
 	private void onRender(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
 		if (!ToggleScanner.scanningEnabled) {
 			return;
 		}
 		ScreenHandler handler = ((ScreenHandlerProvider<?>) this).getScreenHandler();
-		// Potrzebny dostęp do listy slotów - pamiętaj o Accessor (ScreenHandlerAccessor)
 		List<Slot> slots = ((ScreenHandlerAccessor) handler).getSlots();
 
 		int matchedCount = 0;
@@ -66,7 +59,7 @@ public abstract class HandledScreenMixin {
 			}
 		}
 
-		// Jeśli włączone są dźwięki w konfiguracji i pojawiły się nowe dopasowania
+		// Odtwarzanie dźwięku, jeśli jest włączone i zmieniła się liczba trafień
 		if (LtrynekClient.serversConfig != null && LtrynekClient.serversConfig.soundsEnabled) {
 			if (matchedCount != lastMatchedCount && matchedCount > 0) {
 				playAlarmSound(matchedCount);
@@ -75,38 +68,25 @@ public abstract class HandledScreenMixin {
 		lastMatchedCount = matchedCount;
 	}
 
-	/**
-	 * Główna metoda przetwarzająca pojedynczy slot, w tym:
-	 * - pobranie ceny z tooltipu (za pomocą regex),
-	 * - obsługa searchList,
-	 * - wyszukiwanie PriceEntry,
-	 * - podświetlanie slotu w zależności od maxPrice.
-	 *
-	 * @return true jeśli slot został podświetlony (dopasowany), false w przeciwnym wypadku.
-	 */
 	private boolean processSlot(DrawContext context, Slot slot) {
 		ItemStack stack = slot.getStack();
-		if (stack.isEmpty()) {
-			return false;
-		}
+		if (stack.isEmpty()) return false;
 
-		// Pobieramy tooltip (bez kolorów)
+		// 1) Pobieramy tooltip i usuwamy kolory z każdej linii
 		List<Text> tooltip = stack.getTooltip(Item.TooltipContext.DEFAULT, null, TooltipType.BASIC);
 		List<String> loreLines = new ArrayList<>();
 		for (Text textLine : tooltip) {
 			String plain = textLine.getString();
-			String noColorLine = ColorStripUtils.stripAllColorsAndFormats(plain);
-			loreLines.add(noColorLine);
+			String noColor = ColorStripUtils.stripAllColorsAndFormats(plain);
+			loreLines.add(noColor);
 		}
 
-		// Szukamy w configu aktualnie aktywnego profilu
+		// 2) Pobieramy informację o serwerze (by wyciągnąć np. loreRegex) - to część Twojego kodu
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
-		if (entry == null) {
-			return false;
-		}
+		if (entry == null) return false;
 
-		// Kolory podświetlenia
+		String loreRegex = entry.loreRegex;
 		String colorStr = entry.highlightColor;
 		String colorStackStr = (entry.highlightColorStack == null || entry.highlightColorStack.isEmpty())
 				? colorStr
@@ -114,14 +94,13 @@ public abstract class HandledScreenMixin {
 		int highlightColor = parseColor(colorStr);
 		int highlightColorStack = parseColor(colorStackStr);
 
-		// Regex do wyłuskania ceny z tooltipu (np. "Cena: 12k" itp.)
-		String loreRegex = entry.loreRegex;
+		// 3) Wyszukujemy cenę z tooltipu za pomocą loreRegex (tak jak robiłeś wcześniej)
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
 		for (String plain : loreLines) {
 			Matcher m = pattern.matcher(plain);
 			if (m.find()) {
-				String priceGroup = m.group(1); // zakładamy, że w regex jest (group 1)
+				String priceGroup = m.group(1);
 				double parsedPrice = parsePriceWithSuffix(priceGroup);
 				if (parsedPrice >= 0) {
 					foundPrice = parsedPrice;
@@ -129,90 +108,74 @@ public abstract class HandledScreenMixin {
 				}
 			}
 		}
-		if (foundPrice < 0) {
-			return false;
-		}
+		if (foundPrice < 0) return false;
 
-		// Informacje o stacku
+		// 4) Podstawowe informacje o stacku
 		Identifier id = Registries.ITEM.getId(stack.getItem());
-		String materialId = id.toString();       // np. "minecraft:diamond_sword"
+		String materialId = id.toString();
 		String displayName = stack.getName().getString();
 		String noColorName = ColorStripUtils.stripAllColorsAndFormats(displayName);
 
 		int stackSize = stack.getCount();
-		boolean isStack = (stackSize > 1);
+		boolean isStack = stackSize > 1;
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
-		// --- Obsługa ClientSearchListManager (jeśli searchActive) ---
+		// 5) Obsługa systemu searchlist (jeśli aktywny)
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
 				ClientSearchListManager.markAsCounted(uniqueKey);
-
-				// Próbujemy dopasować do każdego "compositeKey" z searchList
+				String lowerName = noColorName.toLowerCase();
 				for (String compositeKey : ClientSearchListManager.getSearchList()) {
 					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
-						// Zliczamy w statystykach
 						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
 			}
 		}
 
-		// --- Obsługa ClientPriceListManager w oparciu o PriceEntry ---
-		// findMatchingPriceEntry: wyszukuje pasujący obiekt PriceEntry (po name, lore, material)
+		// 6) Wyszukujemy dopasowany wpis (uwzględniając lore, nazwę i materiał) z PriceList
 		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
 		if (matchedEntry == null) {
-			// Brak wpisu w priceList, więc nie podświetlamy
+			// Nie znaleziono wpisu pasującego do nazwy, lore i/lub materiału
 			return false;
 		}
 
 		double maxPrice = matchedEntry.maxPrice;
-		// Jeżeli cena itemu (finalPrice) <= maxPrice z configu, to podświetlamy
 		if (finalPrice <= maxPrice) {
 			double ratio = finalPrice / maxPrice;
 			if (ratio > 1.0) ratio = 1.0;
-
-			// Im bliżej maxPrice, tym mniejsza przezroczystość, ale nie schodzimy poniżej 0.3
 			double alphaF = 1.0 - 0.75 * ratio;
-			if (alphaF < 0.30) {
-				alphaF = 0.30;
-			}
+			if (alphaF < 0.30) alphaF = 0.30;
 			int computedAlpha = (int) (alphaF * 255.0) & 0xFF;
 
-			// Inny kolor dla stacka vs pojedynczego itemu
-			int baseRGB = isStack
-					? (highlightColorStack & 0x00FFFFFF)
-					: (highlightColor & 0x00FFFFFF);
-
-			// Tworzymy kolor w formacie ARGB
+			// Kolor dla stacka vs. pojedynczego itemu
+			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF) : (highlightColor & 0x00FFFFFF);
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
 
-			// Rysujemy overlay w miejscu slota
+			// Rysujemy półprzezroczysty overlay
 			int realX = this.x + slot.x;
 			int realY = this.y + slot.y;
 			context.fill(realX, realY, realX + 16, realY + 16, dynamicColor);
-
 			return true;
 		}
+
 		return false;
 	}
 
 	/**
-	 * Dźwięk alarmowy – odtwarzany w zależności od liczby trafień:
-	 * - <= 9 -> miniAlarmSound (N razy)
-	 * - > 9 -> miniAlarmSoundStack (1 raz)
+	 * Wybiera odpowiedni dźwięk w zależności od liczby trafień:
+	 * - dla <= 9: miniAlarmSound, odtwarzany określoną liczbę razy
+	 * - dla > 9: miniAlarmSoundStack, odtwarzany raz
 	 */
 	private void playAlarmSound(int matchedCount) {
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
 		if (entry == null) return;
-
 		String miniSound = entry.miniAlarmSound;
 		String stackSound = entry.miniAlarmSoundStack;
 		if (miniSound == null) miniSound = "";
 		if (stackSound == null) stackSound = "";
-
 		if (matchedCount <= 9) {
 			playSoundNTimes(miniSound, matchedCount);
 		} else {
@@ -221,7 +184,9 @@ public abstract class HandledScreenMixin {
 	}
 
 	/**
-	 * Odtwarza dany dźwięk N razy w krótkich odstępach (0.3s start, potem co 0.15s).
+	 * Odtwarza dany dźwięk N razy z opóźnieniem:
+	 * - Pierwszy dźwięk po 0.3 s
+	 * - Kolejne w odstępach 0.15 s
 	 */
 	private void playSoundNTimes(String soundId, int times) {
 		if (soundId.isEmpty() || times <= 0) return;
@@ -229,11 +194,9 @@ public abstract class HandledScreenMixin {
 		if (id == null) return;
 		SoundEvent soundEvent = Registries.SOUND_EVENT.get(id);
 		if (soundEvent == null) return;
-
 		Timer timer = new Timer();
 		long initialDelay = 300; // 0.3 sekundy
 		long interval = 150;     // 0.15 sekundy odstęp
-
 		for (int i = 0; i < times; i++) {
 			long delay = initialDelay + i * interval;
 			timer.schedule(new TimerTask() {
@@ -247,7 +210,6 @@ public abstract class HandledScreenMixin {
 				}
 			}, delay);
 		}
-		// Po ostatnim odtworzeniu anulujemy timer
 		timer.schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -256,15 +218,10 @@ public abstract class HandledScreenMixin {
 		}, initialDelay + times * interval + 50);
 	}
 
-	/**
-	 * Parsuje cenę z ewentualnym sufiksem (k, m, mld).
-	 * Przykładowo "12k" -> 12000, "5m" -> 5000000, "1.2mld" -> 1_200_000_000 itd.
-	 */
 	private double parsePriceWithSuffix(String raw) {
 		raw = raw.trim().replace(',', '.');
 		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
-
 		// Najpierw sprawdzamy "mld"
 		if (lower.endsWith("mld")) {
 			multiplier = 1_000_000_000.0;
@@ -280,7 +237,6 @@ public abstract class HandledScreenMixin {
 			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
-
 		try {
 			double base = Double.parseDouble(raw);
 			return base * multiplier;
@@ -289,13 +245,9 @@ public abstract class HandledScreenMixin {
 		}
 	}
 
-	/**
-	 * Wyszukuje w konfigu (serversConfig) wpis ServerEntry pasujący do nazwy profilu.
-	 */
 	private ServerEntry findServerEntryByProfile(String profileName) {
-		if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null) {
+		if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null)
 			return null;
-		}
 		for (ServerEntry se : LtrynekClient.serversConfig.servers) {
 			if (se.profileName.equals(profileName)) {
 				return se;
@@ -304,14 +256,10 @@ public abstract class HandledScreenMixin {
 		return null;
 	}
 
-	/**
-	 * Zamienia np. "#FF00FF" czy "FF00FF" na int ARGB. Jeśli brakuje alpha, ustawia "FF" (pełna nieprzezroczystość).
-	 */
 	private int parseColor(String colorStr) {
 		if (colorStr.startsWith("#")) {
 			colorStr = colorStr.substring(1);
 		}
-		// Jeśli mamy tylko 6 znaków, to dopełniamy alpha na początek (FF)
 		if (colorStr.length() == 6) {
 			colorStr = "FF" + colorStr;
 		}

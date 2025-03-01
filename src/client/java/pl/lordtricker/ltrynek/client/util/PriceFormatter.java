@@ -18,6 +18,7 @@ public class PriceFormatter {
             multiplier = 1_000_000.0;
             raw = raw.substring(0, raw.length() - 1);
         }
+
         try {
             double base = Double.parseDouble(raw);
             return base * multiplier;
@@ -27,13 +28,12 @@ public class PriceFormatter {
     }
 
     /**
-     * Formatuje liczbę w "krótkim" formacie z przyrostkami k/m/mld:
-     * - >= 1_000_000_000 -> "xx.xxmld"
-     * - >= 1_000_000 -> "xx.xxm"
-     * - >= 1_000 -> "xx.xxk"
+     * Formatuje liczbę w "krótkim" formacie z przyrostkami k/m:
+     * - >= 1_000_000 -> "xx.xxM"
+     * - >= 1_000 -> "xx.xxK"
      * - < 1_000 -> zwykły format
      *
-     * Zwraca np. "1.59k", "12.50m", "1.20mld", "999.00" (zaokrąglone do 2 miejsc).
+     * Zwraca np. "1.59k", "12.50m", "999.00" (z zaokrągleniem do 2 miejsc).
      * Zmodyfikuj w razie potrzeby (np. usuń .00, itp.).
      */
     public static String formatPrice(double value) {
@@ -51,6 +51,7 @@ public class PriceFormatter {
         }
 
         String formatted = String.format("%.2f", value);
+
         if (formatted.contains(".")) {
             formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", "");
         }
