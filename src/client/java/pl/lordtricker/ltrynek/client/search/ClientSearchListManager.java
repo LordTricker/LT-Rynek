@@ -106,10 +106,6 @@ public class ClientSearchListManager {
         return statsMap.get(rawItem.toLowerCase());
     }
 
-    public static Map<String, Stats> getAllStats() {
-        return statsMap;
-    }
-
     /**
      * Pomocnicza metoda do sprawdzania, czy zeskanowany item pasuje do compositeKey z listy.
      */
