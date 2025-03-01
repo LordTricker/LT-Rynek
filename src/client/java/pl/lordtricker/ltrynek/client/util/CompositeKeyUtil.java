@@ -22,12 +22,10 @@ public class CompositeKeyUtil {
                 .replaceAll("\"\\]", "]")
                 .trim();
 
-        if (normalized.matches("(?i)^(minecraft:)?[a-z0-9_]+$")) {
-            String material = normalized;
-            if (!material.toLowerCase().startsWith("minecraft:")) {
-                material = "minecraft:" + material;
-            }
-            return "|" + "|" + material.toLowerCase();
+        // Jeżeli ciąg zaczyna się od "minecraft:" i składa się z jednego słowa, traktujemy jako materiał.
+        if (normalized.toLowerCase().startsWith("minecraft:") && normalized.matches("(?i)^minecraft:[a-z0-9_]+$")) {
+            String material = normalized.toLowerCase();
+            return "|" + "|" + material;
         }
 
         Matcher matcher = PATTERN.matcher(normalized);
