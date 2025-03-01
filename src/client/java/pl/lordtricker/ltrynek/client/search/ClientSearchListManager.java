@@ -17,7 +17,6 @@ import java.util.TimerTask;
 import static pl.lordtricker.ltrynek.client.util.CompositeKeyUtil.createCompositeKey;
 
 public class ClientSearchListManager {
-    // searchList przechowuje klucze kompozytowe: "baseName|lore|material"
     private static final List<String> searchList = new ArrayList<>();
     private static final Map<String, Stats> statsMap = new HashMap<>();
     private static boolean searchActive = false;
@@ -104,7 +103,6 @@ public class ClientSearchListManager {
     }
 
     public static Stats getStats(String rawItem) {
-        // rawItem to już nasz compositeKey
         return statsMap.get(rawItem.toLowerCase());
     }
 
