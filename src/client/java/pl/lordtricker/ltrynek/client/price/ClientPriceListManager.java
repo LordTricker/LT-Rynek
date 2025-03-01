@@ -1,7 +1,6 @@
 package pl.lordtricker.ltrynek.client.price;
 
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
-import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
 import pl.lordtricker.ltrynek.client.util.CompositeKeyUtil;
 
 import java.util.ArrayList;
@@ -62,7 +61,6 @@ public class ClientPriceListManager {
 
         List<PriceEntry> entries = priceLists.computeIfAbsent(activeProfile, k -> new ArrayList<>());
 
-        // Usuwamy istniejący wpis o tym samym composite key (baseName|lore|material)
         entries.removeIf(pe -> {
             String keyFromEntry = (pe.name + "|" +
                     (pe.lore == null ? "" : pe.lore) + "|" +
@@ -113,23 +111,6 @@ public class ClientPriceListManager {
     }
 
     /**
-     * Znajduje alias w aktywnym profilu na podstawie materialu i noColorName (jeśli wciąż potrzebne).
-     */
-    public static String findAlias(String material, String noColorName) {
-        Map<String, String> lookup = customLookup.get(activeProfile);
-        if (lookup == null) return null;
-        return lookup.get(material + "|" + noColorName);
-    }
-
-    /**
-     * Rejestruje custom item w aktywnym profilu – buduje klucz (material + "|" + noColorName) -> alias.
-     */
-    public static void registerCustomItem(String profile, String material, String noColorName, String alias) {
-        customLookup.computeIfAbsent(profile, k -> new HashMap<>())
-                .put(material + "|" + noColorName, alias);
-    }
-
-    /**
      * Wyszukuje wpis PriceEntry, który pasuje do przekazanych parametrów (nazwa, lore, materiał).
      * Zwraca pierwszy pasujący wpis lub null, jeśli żaden nie pasuje.
      */
@@ -138,17 +119,14 @@ public class ClientPriceListManager {
         if (entries == null) return null;
 
         for (PriceEntry pe : entries) {
-            // 1) Dopasowanie materiału (jeśli pe.material nie jest puste)
             if (pe.material != null && !pe.material.isEmpty()) {
                 if (!materialId.equalsIgnoreCase(pe.material)) {
                     continue;
                 }
             }
-            // 2) Dopasowanie nazwy
             if (!noColorName.toLowerCase().contains(pe.name.toLowerCase())) {
                 continue;
             }
-            // 3) Dopasowanie lore (jeśli pe.lore nie jest puste)
             if (pe.lore != null && !pe.lore.isEmpty()) {
                 boolean foundLore = false;
                 for (String line : loreLines) {
@@ -164,13 +142,6 @@ public class ClientPriceListManager {
             return pe;
         }
         return null;
-    }
-
-    /**
-     * Usuwa kody kolorów i formatowanie z podanego ciągu (używane np. do porównań nazw).
-     */
-    public static String stripColorsAdvanced(String input) {
-        return ColorStripUtils.stripAllColorsAndFormats(input);
     }
 
     /**
