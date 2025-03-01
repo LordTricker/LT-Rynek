@@ -18,7 +18,6 @@ public class Messages {
                 System.err.println("messages.json not found in resources!");
             } else {
                 Type type = new TypeToken<Map<String, List<String>>>() {}.getType();
-                // Ustawiamy kodowanie na UTF-8
                 Map<String, List<String>> loaded = new Gson().fromJson(new InputStreamReader(in, StandardCharsets.UTF_8), type);
                 if (loaded != null) {
                     messages.putAll(loaded);
