@@ -50,8 +50,20 @@ public class ClientPriceListManager {
      * Dodaje lub ustawia wpis (nazwa, lore, materiał, maxPrice) w aktywnym profilu.
      */
     public static void addPriceEntry(String rawItem, double maxPrice) {
+        // Tworzymy klucz kompozytowy z rawItem (np. "minecraft:netherite_sword")
         String compositeKey = CompositeKeyUtil.createCompositeKey(rawItem);
+
+        // Rozbijamy na części: name|lore|material
         String[] parts = compositeKey.split("\\|", -1);
+        if (parts.length < 3) {
+            // Jeśli coś jest nie tak z parsowaniem, wyjdź
+            return;
+        }
+
+        // Jeśli wszystko puste (np. "|||"), nie dodajemy
+        if (parts[0].isEmpty() && parts[1].isEmpty() && parts[2].isEmpty()) {
+            return;
+        }
 
         PriceEntry newEntry = new PriceEntry();
         newEntry.name = parts[0];
@@ -59,8 +71,10 @@ public class ClientPriceListManager {
         newEntry.material = parts[2];
         newEntry.maxPrice = maxPrice;
 
+        // Pobieramy listę wpisów dla aktywnego profilu
         List<PriceEntry> entries = priceLists.computeIfAbsent(activeProfile, k -> new ArrayList<>());
 
+        // Usuwamy istniejący wpis o tym samym kluczu kompozytowym (baseName|lore|material)
         entries.removeIf(pe -> {
             String keyFromEntry = (pe.name + "|" +
                     (pe.lore == null ? "" : pe.lore) + "|" +
@@ -68,7 +82,14 @@ public class ClientPriceListManager {
             return keyFromEntry.equals(compositeKey);
         });
 
+        // Dodajemy nowy wpis
         entries.add(newEntry);
+
+        // DEBUG: wypisujemy do konsoli, co mamy w pamięci
+        System.out.println("[ClientPriceListManager] After addPriceEntry('" + rawItem + "', " + maxPrice + ")");
+        for (PriceEntry pe : entries) {
+            System.out.println(" -> name='" + pe.name + "', lore='" + pe.lore + "', material='" + pe.material + "', maxPrice=" + pe.maxPrice);
+        }
     }
 
     /**
@@ -84,6 +105,12 @@ public class ClientPriceListManager {
                         (pe.material == null ? "" : pe.material)).toLowerCase();
                 return keyFromEntry.equals(compositeKey);
             });
+
+            // DEBUG: wypisujemy do konsoli, co mamy w pamięci
+            System.out.println("[ClientPriceListManager] After removePriceEntry('" + rawItem + "')");
+            for (PriceEntry pe : entries) {
+                System.out.println(" -> name='" + pe.name + "', lore='" + pe.lore + "', material='" + pe.material + "', maxPrice=" + pe.maxPrice);
+            }
         }
     }
 
@@ -98,6 +125,7 @@ public class ClientPriceListManager {
         }
         StringBuilder sb = new StringBuilder();
         for (PriceEntry pe : entries) {
+            // np. "500000.0 " + "" + "(lore)" + "[minecraft:netherite_sword]"
             sb.append(pe.maxPrice).append(" ").append(pe.name);
             if (pe.lore != null && !pe.lore.isEmpty()) {
                 sb.append("(").append(pe.lore).append(")");
@@ -119,14 +147,19 @@ public class ClientPriceListManager {
         if (entries == null) return null;
 
         for (PriceEntry pe : entries) {
+            // 1) Jeśli w PriceEntry jest materiał, sprawdzamy czy pasuje do materialId
             if (pe.material != null && !pe.material.isEmpty()) {
                 if (!materialId.equalsIgnoreCase(pe.material)) {
                     continue;
                 }
             }
-            if (!noColorName.toLowerCase().contains(pe.name.toLowerCase())) {
-                continue;
+            // 2) Nazwa: sprawdzamy, czy noColorName zawiera pe.name (o ile name nie jest puste)
+            if (!pe.name.isEmpty()) {
+                if (!noColorName.toLowerCase().contains(pe.name.toLowerCase())) {
+                    continue;
+                }
             }
+            // 3) Lore: jeśli pe.lore nie jest puste, sprawdzamy, czy przynajmniej jedna linia je zawiera
             if (pe.lore != null && !pe.lore.isEmpty()) {
                 boolean foundLore = false;
                 for (String line : loreLines) {
@@ -139,6 +172,7 @@ public class ClientPriceListManager {
                     continue;
                 }
             }
+            // Jeśli wszystkie warunki spełnione, zwracamy ten wpis
             return pe;
         }
         return null;

@@ -282,7 +282,7 @@ public class ClientCommandRegistration {
                                                     if (remaining.contains("minecraft:")) {
                                                         var allItemIds = net.minecraft.registry.Registries.ITEM.getIds();
                                                         for (var itemId : allItemIds) {
-                                                            String asString = itemId.toString(); // np. "minecraft:stone"
+                                                            String asString = itemId.toString();
                                                             if (asString.contains(remaining)) {
                                                                 builder.suggest(asString);
                                                             }
@@ -417,12 +417,35 @@ public class ClientCommandRegistration {
                 ClientPriceListManager.addPriceEntry(rawItem, pe.maxPrice);
             }
         }
-        ClientPriceListManager.setActiveProfile(LtrynekClient.serversConfig.defaultProfile);
+
+        String address = LtrynekClient.getServerAddress();
+        ServerEntry serverEntry = findServerEntryByAddress(address);
+        if (serverEntry != null) {
+            ClientPriceListManager.setActiveProfile(serverEntry.profileName);
+        } else {
+            ClientPriceListManager.setActiveProfile(LtrynekClient.serversConfig.defaultProfile);
+        }
+    }
+
+    private static ServerEntry findServerEntryByAddress(String address) {
+        if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null)
+            return null;
+        for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
+            for (String domain : entry.domains) {
+                if (address.equalsIgnoreCase(domain) ||
+                        address.toLowerCase().endsWith("." + domain.toLowerCase())) {
+                    return entry;
+                }
+            }
+        }
+        return null;
     }
 
     private static ServerEntry findServerEntryByProfile(String profileName) {
+        if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null)
+            return null;
         for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
-            if (entry.profileName.equals(profileName)) {
+            if (entry.profileName.equalsIgnoreCase(profileName)) {
                 return entry;
             }
         }

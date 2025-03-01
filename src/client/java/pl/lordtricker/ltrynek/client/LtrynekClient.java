@@ -27,13 +27,12 @@ public class LtrynekClient implements ClientModInitializer {
 		for (ServerEntry entry : serversConfig.servers) {
 			ClientPriceListManager.setActiveProfile(entry.profileName);
 			for (PriceEntry pe : entry.prices) {
-				// Jeśli w configu są tylko pe.name i pe.maxPrice, ta metoda dodaje wpis bez dodatkowych pól.
 				ClientPriceListManager.addPriceEntry(pe.name, pe.maxPrice);
 			}
 		}
+
 		ClientPriceListManager.setActiveProfile(serversConfig.defaultProfile);
 
-		// Ustawienie profilu na podstawie adresu serwera
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
 			String address = getServerAddress();
 			ServerEntry entry = findServerEntry(address);
@@ -56,34 +55,19 @@ public class LtrynekClient implements ClientModInitializer {
 		ClientCommandRegistration.registerCommands();
 	}
 
-	private String getServerAddress() {
+	public static String getServerAddress() {
 		if (MinecraftClient.getInstance().getCurrentServerEntry() != null) {
 			return MinecraftClient.getInstance().getCurrentServerEntry().address;
 		}
 		return "singleplayer";
 	}
 
-	private ServerEntry findServerEntry(String address) {
+	public static ServerEntry findServerEntry(String address) {
 		for (ServerEntry entry : serversConfig.servers) {
 			for (String domain : entry.domains) {
 				if (address.equalsIgnoreCase(domain) ||
 						address.toLowerCase().endsWith("." + domain.toLowerCase())) {
 					return entry;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Zwraca wpis konfiguracyjny dla aktywnego profilu.
-	 */
-	public static ServerEntry getServerEntryForActiveProfile() {
-		String activeProfile = ClientPriceListManager.getActiveProfile();
-		if (serversConfig != null && serversConfig.servers != null) {
-			for (ServerEntry se : serversConfig.servers) {
-				if (se.profileName.equals(activeProfile)) {
-					return se;
 				}
 			}
 		}

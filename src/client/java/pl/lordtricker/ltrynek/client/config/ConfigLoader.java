@@ -27,7 +27,6 @@ public class ConfigLoader {
 
         try (Reader reader = Files.newBufferedReader(configFile)) {
             ServersConfig config = GSON.fromJson(reader, ServersConfig.class);
-            // Post-process: ustaw domyślne wartości dla nowych pól, jeśli są null
             if (config != null && config.servers != null) {
                 for (ServerEntry server : config.servers) {
                     if (server.prices != null) {
@@ -70,16 +69,14 @@ public class ConfigLoader {
         ServersConfig cfg = new ServersConfig();
         cfg.defaultProfile = "default";
 
-        // Konfiguracja profilu dla serwera minestar.pl
         ServerEntry server1 = new ServerEntry();
         server1.domains = List.of("minestar.pl");
         server1.profileName = "minestar_boxpvp";
         server1.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+(?:mld|[km])?).*";
         server1.highlightColor = "#00FF33";
         server1.highlightColorStack = "#FFAB00";
-        // Nowe pola dźwiękowe:
-        server1.miniAlarmSound = "minecraft:ui.button.click"; // przykładowy dźwięk dla pojedynczych slotów
-        server1.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete"; // przykładowy dźwięk dla stacków
+        server1.miniAlarmSound = "minecraft:ui.button.click";
+        server1.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
 
         PriceEntry pe1 = new PriceEntry();
         pe1.name = "minecraft:gunpowder";
