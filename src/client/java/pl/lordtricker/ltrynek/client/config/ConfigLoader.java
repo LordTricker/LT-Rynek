@@ -15,27 +15,18 @@ public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CONFIG_FILE_NAME = "ltrynek-config.json";
 
-    /**
-     * Ładuje plik konfiguracyjny (jeśli istnieje), w przeciwnym razie
-     * tworzy domyślny i zapisuje go na dysku.
-     * Po odczycie wykonuje post-processing dla nowych pól.
-     */
     public static ServersConfig loadConfig() {
         Path configDir = FabricLoader.getInstance().getConfigDir();
         Path configFile = configDir.resolve(CONFIG_FILE_NAME);
 
-        // Jeśli plik nie istnieje, tworzymy domyślny config i zapisujemy
         if (!Files.exists(configFile)) {
             ServersConfig defaultConfig = createDefaultConfig();
             saveConfig(defaultConfig);
             return defaultConfig;
         }
 
-        // Odczyt istniejącego pliku
         try (Reader reader = Files.newBufferedReader(configFile)) {
             ServersConfig config = GSON.fromJson(reader, ServersConfig.class);
-
-            // Post-processing: uzupełniamy brakujące pola w PriceEntry (np. puste "lore", "material")
             if (config != null && config.servers != null) {
                 for (ServerEntry server : config.servers) {
                     if (server.prices != null) {
@@ -57,9 +48,7 @@ public class ConfigLoader {
         }
     }
 
-    /**
-     * Zapisuje przekazany obiekt ServersConfig do pliku JSON.
-     */
+
     public static void saveConfig(ServersConfig config) {
         Path configDir = FabricLoader.getInstance().getConfigDir();
         Path configFile = configDir.resolve(CONFIG_FILE_NAME);
@@ -72,33 +61,30 @@ public class ConfigLoader {
     }
 
     /**
-     * Tworzy domyślny config z przykładowymi wartościami, uwzględniając m.in.
-     * loreRegex, highlightColor, highlightColorStack, miniAlarmSound, miniAlarmSoundStack.
+     * Tworzy domyślny config z przykładowymi wartościami, uwzględniając nowe pola:
+     * - loreRegex, highlightColor, highlightColorStack,
+     * - miniAlarmSound oraz miniAlarmSoundStack.
      */
     private static ServersConfig createDefaultConfig() {
         ServersConfig cfg = new ServersConfig();
         cfg.defaultProfile = "default";
 
-        // Konfiguracja profilu dla serwera minestar.pl
         ServerEntry server1 = new ServerEntry();
         server1.domains = List.of("minestar.pl");
         server1.profileName = "minestar_boxpvp";
         server1.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+(?:mld|[km])?).*";
         server1.highlightColor = "#00FF33";
         server1.highlightColorStack = "#FFAB00";
-        // Nowe pola dźwiękowe:
-        server1.miniAlarmSound = "minecraft:ui.button.click"; // przykładowy dźwięk dla pojedynczych slotów
-        server1.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete"; // przykładowy dźwięk dla stacków
+        server1.miniAlarmSound = "minecraft:ui.button.click";
+        server1.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
 
         PriceEntry pe1 = new PriceEntry();
         pe1.name = "minecraft:gunpowder";
         pe1.maxPrice = 100.0;
-        // Domyślne puste wartości dla lore i material (np. "")
         server1.prices.add(pe1);
 
         cfg.servers.add(server1);
 
-        // Konfiguracja profilu dla serwera anarchia.gg
         ServerEntry server2 = new ServerEntry();
         server2.domains = List.of("anarchia.gg");
         server2.profileName = "anarchia_smp";
@@ -115,7 +101,6 @@ public class ConfigLoader {
 
         cfg.servers.add(server2);
 
-        // Kolejne przykładowe serwery z innymi wartościami
         ServerEntry server3 = new ServerEntry();
         server3.domains = List.of("rapy.pl");
         server3.profileName = "rapy";
@@ -166,4 +151,5 @@ public class ConfigLoader {
 
         return cfg;
     }
+
 }

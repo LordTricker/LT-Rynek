@@ -30,6 +30,7 @@ public class LtrynekClient implements ClientModInitializer {
 				ClientPriceListManager.addPriceEntry(pe.name, pe.maxPrice);
 			}
 		}
+
 		ClientPriceListManager.setActiveProfile(serversConfig.defaultProfile);
 
 		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
@@ -54,33 +55,19 @@ public class LtrynekClient implements ClientModInitializer {
 		ClientCommandRegistration.registerCommands();
 	}
 
-	private String getServerAddress() {
+	public static String getServerAddress() {
 		if (MinecraftClient.getInstance().getCurrentServerEntry() != null) {
 			return MinecraftClient.getInstance().getCurrentServerEntry().address;
 		}
 		return "singleplayer";
 	}
 
-	private ServerEntry findServerEntry(String address) {
+	public static ServerEntry findServerEntry(String address) {
 		for (ServerEntry entry : serversConfig.servers) {
 			for (String domain : entry.domains) {
-				if (address.contains(domain)) {
+				if (address.equalsIgnoreCase(domain) ||
+						address.toLowerCase().endsWith("." + domain.toLowerCase())) {
 					return entry;
-				}
-			}
-		}
-		return null;
-	}
-
-	/**
-	 * Zwraca wpis konfiguracyjny dla aktywnego profilu.
-	 */
-	public static ServerEntry getServerEntryForActiveProfile() {
-		String activeProfile = ClientPriceListManager.getActiveProfile();
-		if (serversConfig != null && serversConfig.servers != null) {
-			for (ServerEntry se : serversConfig.servers) {
-				if (se.profileName.equals(activeProfile)) {
-					return se;
 				}
 			}
 		}
