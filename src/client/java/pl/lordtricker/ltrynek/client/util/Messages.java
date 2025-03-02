@@ -13,7 +13,7 @@ public class Messages {
     private static final Map<String, List<String>> messages = new HashMap<>();
 
     static {
-        try (InputStream in = Messages.class.getResourceAsStream("/messages.json")) {
+        try (InputStream in = Messages.class.getResourceAsStream("/assets/ltrynek/messages/messages.json")) {
             if (in == null) {
                 System.err.println("messages.json not found in resources!");
             } else {
