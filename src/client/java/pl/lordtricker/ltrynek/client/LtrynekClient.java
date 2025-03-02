@@ -30,7 +30,7 @@ public class LtrynekClient implements ClientModInitializer {
 		for (ServerEntry entry : serversConfig.servers) {
 			ClientPriceListManager.setActiveProfile(entry.profileName);
 			for (PriceEntry pe : entry.prices) {
-				ClientPriceListManager.addPriceEntry(pe.name, pe.maxPrice);
+				ClientPriceListManager.addPriceEntry(pe);
 			}
 		}
 
