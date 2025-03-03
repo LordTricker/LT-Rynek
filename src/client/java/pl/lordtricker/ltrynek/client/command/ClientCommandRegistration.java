@@ -63,14 +63,26 @@ public class ClientCommandRegistration {
                                     String headerStr = Messages.get("command.profiles.header");
                                     MutableText finalText = (MutableText) ColorUtils.translateColorCodes(headerStr);
                                     finalText.append(Text.of("\n"));
+
+                                    String activeProfile = ClientPriceListManager.getActiveProfile();
                                     for (String profile : profiles) {
-                                        String lineTemplate = Messages.format("profile.available.line", Map.of("profile", profile.trim()));
+                                        String trimmedProfile = profile.trim();
+                                        String lineTemplate;
+                                        if (trimmedProfile.equals(activeProfile)) {
+                                            lineTemplate = Messages.format("profile.picked.line", Map.of("profile", trimmedProfile));
+                                        } else {
+                                            lineTemplate = Messages.format("profile.available.line", Map.of("profile", trimmedProfile));
+                                        }
                                         MutableText lineText = (MutableText) ColorUtils.translateColorCodes(lineTemplate);
-                                        Style clickableStyle = Style.EMPTY
-                                                .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ltr profile " + profile))
-                                                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                                        Text.of("Kliknij aby zmienić profil " + profile)));
-                                        lineText.setStyle(clickableStyle);
+
+                                        if (!trimmedProfile.equals(activeProfile)) {
+                                            Style clickableStyle = Style.EMPTY
+                                                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ltr profile " + trimmedProfile))
+                                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                                                            Text.of("Kliknij, aby zmienić profil na " + trimmedProfile)));
+                                            lineText.setStyle(clickableStyle);
+                                        }
+
                                         finalText.append(lineText).append(Text.of("\n"));
                                     }
                                     ctx.getSource().sendFeedback(finalText);
