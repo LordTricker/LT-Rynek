@@ -219,7 +219,7 @@ public abstract class HandledScreenMixin {
 	}
 
 	private double parsePriceWithSuffix(String raw) {
-		raw = raw.trim().replace(',', '.');
+		raw = raw.trim().replace(" ", "");
 		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
 		// Najpierw sprawdzamy "mld"
@@ -237,6 +237,13 @@ public abstract class HandledScreenMixin {
 			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
+
+		if (!raw.contains(".")) {
+			int i = raw.indexOf(',', raw.length() - 3);
+			if (i != -1) raw = raw.substring(0, i) + "." + raw.substring(i + 1);
+		}
+		raw = raw.replace(",", "");
+
 		try {
 			double base = Double.parseDouble(raw);
 			return base * multiplier;

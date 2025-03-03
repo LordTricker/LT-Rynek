@@ -103,11 +103,13 @@
   ],
   "command.profiles.header": [
     " ",
-    "&8[&3&lL&b&lT &fRynek&8] &7Dostepne profile:",
-    " "
+    "&8[&3L&bT &fRynek&8] &7Dostepne profile:"
   ],
   "profile.available.line": [
-    "&8- &f%profile%"
+    "&7- &f%profile% &8[&eKliknij aby zmienić&8]"
+  ],
+  "profile.picked.line": [
+    "&7- &a%profile% &8[&2Wybrany&8]"
   ],
   "command.list.header": [
     " ",
