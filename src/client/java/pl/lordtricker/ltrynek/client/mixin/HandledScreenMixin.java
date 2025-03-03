@@ -201,19 +201,31 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 	 * Parsowanie ceny z sufiksami (np. k, m, mld).
 	 */
 	private double parsePriceWithSuffix(String raw) {
-		raw = raw.trim().replace(',', '.');
+		raw = raw.trim().replace(" ", "");
 		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
+		// Najpierw sprawdzamy "mld"
 		if (lower.endsWith("mld")) {
 			multiplier = 1_000_000_000.0;
 			raw = raw.substring(0, raw.length() - 3);
-		} else if (lower.endsWith("m")) {
+		}
+		// Potem "m"
+		else if (lower.endsWith("m")) {
 			multiplier = 1_000_000.0;
 			raw = raw.substring(0, raw.length() - 1);
-		} else if (lower.endsWith("k")) {
+		}
+		// Następnie "k"
+		else if (lower.endsWith("k")) {
 			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
+
+		if (!raw.contains(".")) {
+			int i = raw.indexOf(',', raw.length() - 3);
+			if (i != -1) raw = raw.substring(0, i) + "." + raw.substring(i + 1);
+		}
+		raw = raw.replace(",", "");
+
 		try {
 			double base = Double.parseDouble(raw);
 			return base * multiplier;
