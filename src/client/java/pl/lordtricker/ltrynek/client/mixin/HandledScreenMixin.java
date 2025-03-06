@@ -68,6 +68,18 @@ public abstract class HandledScreenMixin {
 		lastMatchedCount = matchedCount;
 	}
 
+	// 1) Wzorzec dla nowszych wersji (1.21+), np.:
+	// ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>5
+	private static final Pattern NEWER_PATTERN = Pattern.compile(
+			"ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)"
+	);
+
+	// 2) Wzorzec dla starszych wersji, np.:
+	// {id:"minecraft:unbreaking",lvl:3s}
+	private static final Pattern OLDER_PATTERN = Pattern.compile(
+			"\\{id:\"([^\"]+)\",lvl:(\\d+)s\\}"
+	);
+
 	private boolean processSlot(DrawContext context, Slot slot) {
 		ItemStack stack = slot.getStack();
 		if (stack.isEmpty()) return false;
@@ -81,12 +93,15 @@ public abstract class HandledScreenMixin {
 		}
 
 		String rawEnchants = stack.getEnchantments().toString();
-		Pattern p = Pattern.compile("ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)");
-		Matcher enchantMatcher = p.matcher(rawEnchants);
+
+		Matcher enchantMatcherNew = NEWER_PATTERN.matcher(rawEnchants);
 		StringBuilder enchantBuilder = new StringBuilder();
-		while (enchantMatcher.find()) {
-			String enchId = enchantMatcher.group(1).trim();
-			String levelStr = enchantMatcher.group(2).trim();
+		boolean foundAny = false;
+
+		while (enchantMatcherNew.find()) {
+			foundAny = true;
+			String enchId = enchantMatcherNew.group(1).trim();
+			String levelStr = enchantMatcherNew.group(2).trim();
 			String shortEnchant = enchId + levelStr;
 			String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, true);
 			if (!enchantBuilder.isEmpty()) {
@@ -94,10 +109,29 @@ public abstract class HandledScreenMixin {
 			}
 			enchantBuilder.append(mappedEnchant);
 		}
+
+		if (!foundAny) {
+			Matcher enchantMatcherOld = OLDER_PATTERN.matcher(rawEnchants);
+			while (enchantMatcherOld.find()) {
+				String enchId = enchantMatcherOld.group(1).trim();
+				String levelStr = enchantMatcherOld.group(2).trim();
+				if (enchId.startsWith("minecraft:")) {
+					enchId = enchId.substring("minecraft:".length());
+				}
+				String shortEnchant = enchId + levelStr;
+				String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, false);
+				if (enchantBuilder.length() > 0) {
+					enchantBuilder.append(",");
+				}
+				enchantBuilder.append(mappedEnchant);
+			}
+		}
+
 		String enchantmentsString = enchantBuilder.toString();
 		if (!enchantmentsString.isEmpty()) {
 			loreLines.add(enchantmentsString);
 		}
+
 
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);

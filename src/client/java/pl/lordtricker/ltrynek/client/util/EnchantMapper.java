@@ -8,7 +8,6 @@ public class EnchantMapper {
     private static final Map<String, String> post121Map = new HashMap<>();
 
     static {
-        // Pre 1.21 (starsze wersje) – skrócone aliasy
         pre120Map.put("prot", "prot");
         pre120Map.put("protection", "prot");
 
@@ -94,15 +93,18 @@ public class EnchantMapper {
     }
 
     /**
-     * Mapuje skróconą nazwę enchantu (może zawierać numer poziomu, np. "unbreaking3") do właściwego aliasu.
-     * W wyniku np. "unbreaking3" przy mapowaniu dla wersji post121 zostanie przekształcone na "unbr3".
+     * Mapuje skróconą nazwę enchantu (może zawierać numer poziomu, np. "minecraft:protection2")
+     * do właściwego aliasu. Jeśli nazwa zawiera prefiks "minecraft:" – zostanie on usunięty.
      *
-     * @param shortName skrócona nazwa enchantu (z poziomem, np. "sharpness5")
-     * @param post121   true dla mapowania w stylu 1.21+, false dla starszych wersji
-     * @return skrócony alias enchantu z dołączonym poziomem (np. "sharp5") lub "unknown", jeśli brak mapowania
+     * @param shortName skrócona nazwa enchantu z poziomem
+     * @param post121   true dla wersji 1.21+, false dla starszych
+     * @return skrócony alias enchantu z dołączonym poziomem (np. "prot2") lub "unknown", jeśli brak mapowania
      */
     public static String mapEnchant(String shortName, boolean post121) {
         String baseName = shortName.toLowerCase();
+        if (baseName.startsWith("minecraft:")) {
+            baseName = baseName.substring("minecraft:".length());
+        }
         String levelPart = "";
         int index = baseName.length() - 1;
         while (index >= 0 && Character.isDigit(baseName.charAt(index))) {
