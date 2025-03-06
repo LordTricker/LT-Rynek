@@ -18,12 +18,13 @@ import pl.lordtricker.ltrynek.client.LtrynekClient;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
-import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
-import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientSearchListManager;
 import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvent;
+import pl.lordtricker.ltrynek.client.util.EnchantMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,6 @@ import java.util.regex.Pattern;
 @Mixin(HandledScreen.class)
 public abstract class HandledScreenMixin extends DrawableHelper {
 
-	// Statyczne liczniki trafień – resetowane co klatkę (stary sposób)
 	private static int matchedCount = 0;
 	private static int lastMatchedCount = 0;
 
@@ -44,6 +44,19 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 	 * a pobieranie lore odbywa się z NBT.
 	 * Reszta logiki (maxPrice, searchList) działa wg. nowej wersji.
 	 */
+
+	// 1) Wzorzec dla nowszych wersji (1.21+), np.:
+	// ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>5
+	private static final Pattern NEWER_PATTERN = Pattern.compile(
+			"ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)"
+	);
+
+	// 2) Wzorzec dla starszych wersji, np.:
+	// {id:"minecraft:unbreaking",lvl:3s}
+	private static final Pattern OLDER_PATTERN = Pattern.compile(
+			"\\{id:\"([^\"]+)\",lvl:(\\d+)s\\}"
+	);
+
 	@Inject(method = "drawSlot", at = @At("HEAD"))
 	private void onDrawSlot(MatrixStack matrices, Slot slot, CallbackInfo ci) {
 		if (!ToggleScanner.scanningEnabled) return;
@@ -95,6 +108,46 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		}
 		if (foundPrice < 0) return;
 
+		String rawEnchants = stack.getEnchantments().toString();
+
+		Matcher enchantMatcherNew = NEWER_PATTERN.matcher(rawEnchants);
+		StringBuilder enchantBuilder = new StringBuilder();
+		boolean foundAny = false;
+
+		while (enchantMatcherNew.find()) {
+			foundAny = true;
+			String enchId = enchantMatcherNew.group(1).trim();
+			String levelStr = enchantMatcherNew.group(2).trim();
+			String shortEnchant = enchId + levelStr;
+			String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, true);
+			if (!enchantBuilder.isEmpty()) {
+				enchantBuilder.append(",");
+			}
+			enchantBuilder.append(mappedEnchant);
+		}
+
+		if (!foundAny) {
+			Matcher enchantMatcherOld = OLDER_PATTERN.matcher(rawEnchants);
+			while (enchantMatcherOld.find()) {
+				String enchId = enchantMatcherOld.group(1).trim();
+				String levelStr = enchantMatcherOld.group(2).trim();
+				if (enchId.startsWith("minecraft:")) {
+					enchId = enchId.substring("minecraft:".length());
+				}
+				String shortEnchant = enchId + levelStr;
+				String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, false);
+				if (!enchantBuilder.isEmpty()) {
+					enchantBuilder.append(",");
+				}
+				enchantBuilder.append(mappedEnchant);
+			}
+		}
+
+		String enchantmentsString = enchantBuilder.toString();
+		if (!enchantmentsString.isEmpty()) {
+			loreLines.add(enchantmentsString);
+		}
+
 		// Pobieramy dane przedmiotu
 		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
@@ -111,7 +164,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
 				ClientSearchListManager.markAsCounted(uniqueKey);
 				for (String compositeKey : ClientSearchListManager.getSearchList()) {
-					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
+					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId, enchantmentsString)) {
 						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
@@ -119,7 +172,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		}
 
 		// Pobieramy maxPrice wg. nowej logiki
-		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
+		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId, enchantmentsString);
 		if (matchedEntry == null) return;
 		double maxPrice = matchedEntry.maxPrice;
 
