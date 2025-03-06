@@ -50,7 +50,7 @@ public class PriceFormatter {
             suffix = "k";
         }
 
-        String formatted = String.format("%.2f", value);
+        String formatted = String.format(java.util.Locale.US, "%.2f", value);
 
         if (formatted.contains(".")) {
             formatted = formatted.replaceAll("0+$", "").replaceAll("\\.$", "");

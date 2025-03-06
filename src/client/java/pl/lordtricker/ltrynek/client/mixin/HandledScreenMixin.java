@@ -1,17 +1,17 @@
 package pl.lordtricker.ltrynek.client.mixin;
 
+import net.minecraft.client.sound.PositionedSoundInstance;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
-import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
-import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientSearchListManager;
 import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.ScreenHandlerProvider;
-import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import pl.lordtricker.ltrynek.client.util.EnchantMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,7 +60,6 @@ public abstract class HandledScreenMixin {
 			}
 		}
 
-		// Odtwarzanie dźwięku, jeśli jest włączone i zmieniła się liczba trafień
 		if (LtrynekClient.serversConfig != null && LtrynekClient.serversConfig.soundsEnabled) {
 			if (matchedCount != lastMatchedCount && matchedCount > 0) {
 				playAlarmSound(matchedCount);
@@ -72,7 +72,6 @@ public abstract class HandledScreenMixin {
 		ItemStack stack = slot.getStack();
 		if (stack.isEmpty()) return false;
 
-		// 1) Pobieramy tooltip i usuwamy kolory z każdej linii
 		List<Text> tooltip = stack.getTooltip(Item.TooltipContext.DEFAULT, null, TooltipType.BASIC);
 		List<String> loreLines = new ArrayList<>();
 		for (Text textLine : tooltip) {
@@ -81,7 +80,25 @@ public abstract class HandledScreenMixin {
 			loreLines.add(noColor);
 		}
 
-		// 2) Pobieramy informację o serwerze (by wyciągnąć np. loreRegex) - to część Twojego kodu
+		String rawEnchants = stack.getEnchantments().toString();
+		Pattern p = Pattern.compile("ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)");
+		Matcher enchantMatcher = p.matcher(rawEnchants);
+		StringBuilder enchantBuilder = new StringBuilder();
+		while (enchantMatcher.find()) {
+			String enchId = enchantMatcher.group(1).trim();
+			String levelStr = enchantMatcher.group(2).trim();
+			String shortEnchant = enchId + levelStr;
+			String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, true);
+			if (!enchantBuilder.isEmpty()) {
+				enchantBuilder.append(",");
+			}
+			enchantBuilder.append(mappedEnchant);
+		}
+		String enchantmentsString = enchantBuilder.toString();
+		if (!enchantmentsString.isEmpty()) {
+			loreLines.add(enchantmentsString);
+		}
+
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
 		if (entry == null) return false;
@@ -94,7 +111,6 @@ public abstract class HandledScreenMixin {
 		int highlightColor = parseColor(colorStr);
 		int highlightColorStack = parseColor(colorStackStr);
 
-		// 3) Wyszukujemy cenę z tooltipu za pomocą loreRegex (tak jak robiłeś wcześniej)
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
 		for (String plain : loreLines) {
@@ -110,7 +126,6 @@ public abstract class HandledScreenMixin {
 		}
 		if (foundPrice < 0) return false;
 
-		// 4) Podstawowe informacje o stacku
 		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
 		String displayName = stack.getName().getString();
@@ -120,24 +135,20 @@ public abstract class HandledScreenMixin {
 		boolean isStack = stackSize > 1;
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
-		// 5) Obsługa systemu searchlist (jeśli aktywny)
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
 				ClientSearchListManager.markAsCounted(uniqueKey);
-				String lowerName = noColorName.toLowerCase();
 				for (String compositeKey : ClientSearchListManager.getSearchList()) {
-					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
+					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId, enchantmentsString)) {
 						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
 			}
 		}
 
-		// 6) Wyszukujemy dopasowany wpis (uwzględniając lore, nazwę i materiał) z PriceList
-		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
+		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId, enchantmentsString);
 		if (matchedEntry == null) {
-			// Nie znaleziono wpisu pasującego do nazwy, lore i/lub materiału
 			return false;
 		}
 
@@ -148,12 +159,9 @@ public abstract class HandledScreenMixin {
 			double alphaF = 1.0 - 0.75 * ratio;
 			if (alphaF < 0.30) alphaF = 0.30;
 			int computedAlpha = (int) (alphaF * 255.0) & 0xFF;
-
-			// Kolor dla stacka vs. pojedynczego itemu
 			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF) : (highlightColor & 0x00FFFFFF);
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
 
-			// Rysujemy półprzezroczysty overlay
 			int realX = this.x + slot.x;
 			int realY = this.y + slot.y;
 			context.fill(realX, realY, realX + 16, realY + 16, dynamicColor);
@@ -163,11 +171,7 @@ public abstract class HandledScreenMixin {
 		return false;
 	}
 
-	/**
-	 * Wybiera odpowiedni dźwięk w zależności od liczby trafień:
-	 * - dla <= 9: miniAlarmSound, odtwarzany określoną liczbę razy
-	 * - dla > 9: miniAlarmSoundStack, odtwarzany raz
-	 */
+
 	private void playAlarmSound(int matchedCount) {
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
@@ -183,11 +187,6 @@ public abstract class HandledScreenMixin {
 		}
 	}
 
-	/**
-	 * Odtwarza dany dźwięk N razy z opóźnieniem:
-	 * - Pierwszy dźwięk po 0.3 s
-	 * - Kolejne w odstępach 0.15 s
-	 */
 	private void playSoundNTimes(String soundId, int times) {
 		if (soundId.isEmpty() || times <= 0) return;
 		Identifier id = Identifier.tryParse(soundId);
@@ -196,7 +195,7 @@ public abstract class HandledScreenMixin {
 		if (soundEvent == null) return;
 		Timer timer = new Timer();
 		long initialDelay = 300; // 0.3 sekundy
-		long interval = 150;     // 0.15 sekundy odstęp
+		long interval = 150;     // odstęp 0.15 sekundy
 		for (int i = 0; i < times; i++) {
 			long delay = initialDelay + i * interval;
 			timer.schedule(new TimerTask() {
@@ -222,28 +221,21 @@ public abstract class HandledScreenMixin {
 		raw = raw.trim().replace(" ", "");
 		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
-		// Najpierw sprawdzamy "mld"
 		if (lower.endsWith("mld")) {
 			multiplier = 1_000_000_000.0;
 			raw = raw.substring(0, raw.length() - 3);
-		}
-		// Potem "m"
-		else if (lower.endsWith("m")) {
+		} else if (lower.endsWith("m")) {
 			multiplier = 1_000_000.0;
 			raw = raw.substring(0, raw.length() - 1);
-		}
-		// Następnie "k"
-		else if (lower.endsWith("k")) {
+		} else if (lower.endsWith("k")) {
 			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
-
 		if (!raw.contains(".")) {
 			int i = raw.indexOf(',', raw.length() - 3);
 			if (i != -1) raw = raw.substring(0, i) + "." + raw.substring(i + 1);
 		}
 		raw = raw.replace(",", "");
-
 		try {
 			double base = Double.parseDouble(raw);
 			return base * multiplier;

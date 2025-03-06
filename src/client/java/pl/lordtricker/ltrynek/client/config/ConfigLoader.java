@@ -37,6 +37,9 @@ public class ConfigLoader {
                             if (pe.material == null) {
                                 pe.material = "";
                             }
+                            if (pe.enchants == null) {
+                                pe.enchants = null;
+                            }
                         }
                     }
                 }
@@ -47,7 +50,6 @@ public class ConfigLoader {
             return new ServersConfig();
         }
     }
-
 
     public static void saveConfig(ServersConfig config) {
         Path configDir = FabricLoader.getInstance().getConfigDir();
@@ -151,5 +153,4 @@ public class ConfigLoader {
 
         return cfg;
     }
-
 }

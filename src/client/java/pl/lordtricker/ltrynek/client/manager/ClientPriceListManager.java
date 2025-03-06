@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client.price;
+package pl.lordtricker.ltrynek.client.manager;
 
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.util.CompositeKeyUtil;
@@ -12,7 +12,7 @@ public class ClientPriceListManager {
 
     /**
      * Struktura: profile -> lista wpisów typu PriceEntry.
-     * Każdy wpis zawiera: name, lore, material, maxPrice.
+     * Każdy wpis zawiera: name, lore, material, enchants, maxPrice.
      */
     private static final Map<String, List<PriceEntry>> priceLists = new HashMap<>();
 
@@ -47,20 +47,15 @@ public class ClientPriceListManager {
     }
 
     /**
-     * Dodaje lub ustawia wpis (nazwa, lore, materiał, maxPrice) w aktywnym profilu.
+     * Dodaje lub ustawia wpis (name, lore, material, enchants, maxPrice) w aktywnym profilu.
      */
-
     public static void addPriceEntry(PriceEntry entry) {
-        String compositeKey = (entry.name + "|" +
-                (entry.lore == null ? "" : entry.lore) + "|" +
-                (entry.material == null ? "" : entry.material)).toLowerCase();
+        String compositeKey = CompositeKeyUtil.getCompositeKeyFromEntry(entry);
 
         List<PriceEntry> entries = priceLists.computeIfAbsent(activeProfile, k -> new ArrayList<>());
 
         entries.removeIf(pe -> {
-            String keyFromEntry = (pe.name + "|" +
-                    (pe.lore == null ? "" : pe.lore) + "|" +
-                    (pe.material == null ? "" : pe.material)).toLowerCase();
+            String keyFromEntry = CompositeKeyUtil.getCompositeKeyFromEntry(pe);
             return keyFromEntry.equals(compositeKey);
         });
 
@@ -69,22 +64,16 @@ public class ClientPriceListManager {
 
     public static void addPriceEntry(String rawItem, double maxPrice) {
         String compositeKey = CompositeKeyUtil.createCompositeKey(rawItem);
-
         String[] parts = compositeKey.split("\\|", -1);
         if (parts.length < 3) {
             return;
         }
-
-        if (parts[0].isEmpty() && parts[1].isEmpty() && parts[2].isEmpty()) {
-            return;
-        }
-
         PriceEntry newEntry = new PriceEntry();
         newEntry.name = parts[0];
         newEntry.lore = parts[1];
         newEntry.material = parts[2];
+        newEntry.enchants = parts.length > 3 ? parts[3] : "";
         newEntry.maxPrice = maxPrice;
-
         addPriceEntry(newEntry);
     }
 
@@ -98,43 +87,20 @@ public class ClientPriceListManager {
             entries.removeIf(pe -> {
                 String keyFromEntry = (pe.name + "|" +
                         (pe.lore == null ? "" : pe.lore) + "|" +
-                        (pe.material == null ? "" : pe.material)).toLowerCase();
+                        (pe.material == null ? "" : pe.material) + "|" +
+                        (pe.enchants == null ? "" : pe.enchants)).toLowerCase();
                 return keyFromEntry.equals(compositeKey);
             });
         }
     }
 
     /**
-     * Zwraca sformatowaną listę przedmiotów (maxPrice + nazwa) z aktywnego profilu.
-     * Format: "maxPrice name(lore)[material]" w każdej linii.
+     * Wyszukuje wpis PriceEntry, który pasuje do przekazanych parametrów (name, lore, material).
+     * Jeśli chcesz uwzględnić enchanty, zmodyfikuj logikę porównania.
      */
-    public static String getPriceListAsString() {
-        List<PriceEntry> entries = priceLists.get(activeProfile);
-        if (entries == null || entries.isEmpty()) {
-            return "No items in profile " + activeProfile;
-        }
-        StringBuilder sb = new StringBuilder();
-        for (PriceEntry pe : entries) {
-            sb.append(pe.maxPrice).append(" ").append(pe.name);
-            if (pe.lore != null && !pe.lore.isEmpty()) {
-                sb.append("(").append(pe.lore).append(")");
-            }
-            if (pe.material != null && !pe.material.isEmpty()) {
-                sb.append("[").append(pe.material).append("]");
-            }
-            sb.append("\n");
-        }
-        return sb.toString().trim();
-    }
-
-    /**
-     * Wyszukuje wpis PriceEntry, który pasuje do przekazanych parametrów (nazwa, lore, materiał).
-     * Zwraca pierwszy pasujący wpis lub null, jeśli żaden nie pasuje.
-     */
-    public static PriceEntry findMatchingPriceEntry(String noColorName, List<String> loreLines, String materialId) {
+    public static PriceEntry findMatchingPriceEntry(String noColorName, List<String> loreLines, String materialId, String enchantments) {
         List<PriceEntry> entries = priceLists.get(activeProfile);
         if (entries == null) return null;
-
         for (PriceEntry pe : entries) {
             if (pe.material != null && !pe.material.isEmpty()) {
                 if (!materialId.equalsIgnoreCase(pe.material)) {
@@ -142,7 +108,10 @@ public class ClientPriceListManager {
                 }
             }
             if (!pe.name.isEmpty()) {
-                if (!noColorName.toLowerCase().contains(pe.name.toLowerCase())) {
+                String lowerName = noColorName.toLowerCase();
+                String lowerMaterial = materialId.toLowerCase();
+                String lowerEntryName = pe.name.toLowerCase();
+                if (!lowerName.contains(lowerEntryName) && !lowerMaterial.contains(lowerEntryName)) {
                     continue;
                 }
             }
@@ -158,10 +127,18 @@ public class ClientPriceListManager {
                     continue;
                 }
             }
+            if (pe.enchants != null && !pe.enchants.isEmpty()) {
+                if (enchantments == null || enchantments.isEmpty() ||
+                        !enchantments.toLowerCase().contains(pe.enchants.toLowerCase())) {
+                    continue;
+                }
+            }
             return pe;
         }
         return null;
     }
+
+
 
     /**
      * Daje dostęp do wszystkich profili (przydatne np. do zapisywania w configu).

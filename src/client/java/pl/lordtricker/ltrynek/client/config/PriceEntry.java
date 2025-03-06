@@ -5,4 +5,5 @@ public class PriceEntry {
     public String lore;
     public String material;
     public double maxPrice;
+    public String enchants;
 }
