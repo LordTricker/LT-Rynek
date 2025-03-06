@@ -12,11 +12,6 @@
     "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
     " "
   ],
-  "command.defaultprofile.success": [
-    " ",
-    "&8[&3L&bT &fRynek&8] &7Domyslny profil ustawiony na: &f%profile%",
-    " "
-  ],
   "command.profiles.list": [
     " ",
     "&8[&3L&bT &fRynek&8] &7Dostepne profile:"
@@ -70,11 +65,9 @@
   ],
   "player.join": [
     " ",
-    "&8[&3L&bT &fRynek&8] &fWitaj na serwerze!",
-    "&8[&3L&bT &fRynek&8] &fLT-Rynek Mod &7jest &aaktywny.",
+    "&8[&3L&bT &fRynek&8] &fLT-Rynek &7uruchomił się &apoprawnie&7.",
     "&8- &fDołącz do discord&8: &3https://dc.ltmods.pl/",
-    " ",
-    "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
+    "&8- &7Komendy pod &f/ltr pomoc",
     " "
   ],
   "pricelist.no_data": [
