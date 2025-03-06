@@ -4,8 +4,8 @@ import pl.lordtricker.ltrynek.client.LtrynekClient;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
-import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
-import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientSearchListManager;
 import pl.lordtricker.ltrynek.client.util.ColorStripUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import pl.lordtricker.ltrynek.client.util.EnchantMapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +82,25 @@ public abstract class HandledScreenMixin {
 			loreLines.add(noColor);
 		}
 
+		String rawEnchants = stack.getEnchantments().toString();
+		Pattern p = Pattern.compile("ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)");
+		Matcher enchantMatcher = p.matcher(rawEnchants);
+		StringBuilder enchantBuilder = new StringBuilder();
+		while (enchantMatcher.find()) {
+			String enchId = enchantMatcher.group(1).trim();
+			String levelStr = enchantMatcher.group(2).trim();
+			String shortEnchant = enchId + levelStr;
+			String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, true);
+			if (!enchantBuilder.isEmpty()) {
+				enchantBuilder.append(",");
+			}
+			enchantBuilder.append(mappedEnchant);
+		}
+		String enchantmentsString = enchantBuilder.toString();
+		if (!enchantmentsString.isEmpty()) {
+			loreLines.add(enchantmentsString);
+		}
+
 		// 2) Pobieramy informację o serwerze (by wyciągnąć np. loreRegex) - to część Twojego kodu
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
@@ -127,7 +147,7 @@ public abstract class HandledScreenMixin {
 				ClientSearchListManager.markAsCounted(uniqueKey);
 				String lowerName = noColorName.toLowerCase();
 				for (String compositeKey : ClientSearchListManager.getSearchList()) {
-					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId)) {
+					if (ClientSearchListManager.matchesSearchTerm(compositeKey, noColorName, loreLines, materialId, enchantmentsString)) {
 						ClientSearchListManager.updateStats(compositeKey, finalPrice, stackSize);
 					}
 				}
@@ -135,7 +155,7 @@ public abstract class HandledScreenMixin {
 		}
 
 		// 6) Wyszukujemy dopasowany wpis (uwzględniając lore, nazwę i materiał) z PriceList
-		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId);
+		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId, enchantmentsString);
 		if (matchedEntry == null) {
 			// Nie znaleziono wpisu pasującego do nazwy, lore i/lub materiału
 			return false;
