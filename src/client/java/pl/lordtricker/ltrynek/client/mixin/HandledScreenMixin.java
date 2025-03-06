@@ -99,9 +99,8 @@ public abstract class HandledScreenMixin {
 			loreLines.add(noColorLine);
 		}
 
-		// Debug: surowe enchanty
+		// Pobieramy surowe enchanty
 		String rawEnchants = stack.getEnchantments().toString();
-		System.out.println("[DEBUG] rawEnchants: " + rawEnchants);
 
 		// Spróbuj najpierw dopasować nowszy wzorzec (1.21+)
 		Matcher enchantMatcherNew = NEWER_PATTERN.matcher(rawEnchants);
@@ -112,16 +111,8 @@ public abstract class HandledScreenMixin {
 			foundAny = true;
 			String enchId = enchantMatcherNew.group(1).trim();
 			String levelStr = enchantMatcherNew.group(2).trim();
-
-			// Tworzymy skróconą nazwę
 			String shortEnchant = enchId + levelStr;
 			String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, true);
-
-			System.out.println("[DEBUG] [NEW] Found enchant: enchId=" + enchId +
-					", level=" + levelStr +
-					" -> shortEnchant=" + shortEnchant +
-					" -> mappedEnchant=" + mappedEnchant);
-
 			if (!enchantBuilder.isEmpty()) {
 				enchantBuilder.append(",");
 			}
@@ -134,21 +125,11 @@ public abstract class HandledScreenMixin {
 			while (enchantMatcherOld.find()) {
 				String enchId = enchantMatcherOld.group(1).trim();
 				String levelStr = enchantMatcherOld.group(2).trim();
-
-				// Usuwamy prefiks "minecraft:" jeśli występuje w starszych wersjach
 				if (enchId.startsWith("minecraft:")) {
 					enchId = enchId.substring("minecraft:".length());
 				}
-
-				// Tworzymy skróconą nazwę
 				String shortEnchant = enchId + levelStr;
-				String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, false); // false dla wersji starszych niż 1.21
-
-				System.out.println("[DEBUG] [OLD] Found enchant: enchId=" + enchId +
-						", level=" + levelStr +
-						" -> shortEnchant=" + shortEnchant +
-						" -> mappedEnchant=" + mappedEnchant);
-
+				String mappedEnchant = EnchantMapper.mapEnchant(shortEnchant, false);
 				if (enchantBuilder.length() > 0) {
 					enchantBuilder.append(",");
 				}
@@ -157,8 +138,6 @@ public abstract class HandledScreenMixin {
 		}
 
 		String enchantmentsString = enchantBuilder.toString();
-		System.out.println("[DEBUG] enchantmentsString: " + enchantmentsString);
-
 		if (!enchantmentsString.isEmpty()) {
 			loreLines.add(enchantmentsString);
 		}
