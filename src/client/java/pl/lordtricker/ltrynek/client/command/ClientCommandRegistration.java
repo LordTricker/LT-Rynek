@@ -8,8 +8,8 @@ import pl.lordtricker.ltrynek.client.util.Messages;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
-import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
-import pl.lordtricker.ltrynek.client.search.ClientSearchListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientSearchListManager;
 import pl.lordtricker.ltrynek.client.util.PriceFormatter;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -44,17 +44,6 @@ public class ClientCommandRegistration {
                                     ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
                                     return 1;
                                 })
-                        )
-                        .then(ClientCommandManager.literal("defaultprofile")
-                                .then(ClientCommandManager.argument("profile", StringArgumentType.word())
-                                        .executes(ctx -> {
-                                            String profile = StringArgumentType.getString(ctx, "profile");
-                                            ClientPriceListManager.setActiveProfile(profile);
-                                            String msg = Messages.format("command.defaultprofile.success", Map.of("profile", profile));
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
-                                            return 1;
-                                        })
-                                )
                         )
                         .then(ClientCommandManager.literal("profiles")
                                 .executes(ctx -> {
@@ -106,6 +95,9 @@ public class ClientCommandRegistration {
                                         .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
                                                 .suggests((context, builder) -> {
                                                     String remaining = builder.getRemaining().toLowerCase();
+                                                    if (remaining.startsWith("mc:")) {
+                                                        remaining = "minecraft:" + remaining.substring(3);
+                                                    }
                                                     if (remaining.contains("minecraft:")) {
                                                         Iterable<net.minecraft.util.Identifier> allItemIds = net.minecraft.util.registry.Registry.ITEM.getIds();
                                                         for (net.minecraft.util.Identifier itemId : allItemIds) {
@@ -169,52 +161,47 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("list")
                                 .executes(ctx -> {
                                     String activeProfile = ClientPriceListManager.getActiveProfile();
-                                    String listRaw = ClientPriceListManager.getPriceListAsString();
-                                    String[] lines = listRaw.split("\n");
+                                    List<PriceEntry> entries = ClientPriceListManager.getAllProfiles().get(activeProfile);
                                     MutableText finalText = (MutableText) Text.of("");
-                                    for (String line : lines) {
-                                        String[] parts = line.split("\\s+", 2);
-                                        if (parts.length < 2) continue;
-                                        String priceStr = parts[0];
-                                        String itemName = parts[1];
-                                        double parsed;
-                                        try {
-                                            parsed = Double.parseDouble(priceStr);
-                                        } catch (NumberFormatException e) {
-                                            continue;
+
+                                    if (entries != null) {
+                                        for (PriceEntry pe : entries) {
+                                            String compositeKey = CompositeKeyUtil.getCompositeKeyFromEntry(pe);
+                                            String friendlyName = CompositeKeyUtil.getFriendlyName(compositeKey);
+                                            String priceStr = PriceFormatter.formatPrice(pe.maxPrice);
+
+                                            // Ikona edycji
+                                            String editIconStr = Messages.get("pricelist.icon.edit");
+                                            MutableText editIcon = (MutableText) ColorUtils.translateColorCodes(editIconStr);
+                                            editIcon.setStyle(
+                                                    Style.EMPTY.withClickEvent(new ClickEvent(
+                                                                    ClickEvent.Action.SUGGEST_COMMAND,
+                                                                    "/ltr add " + priceStr + " " + friendlyName))
+                                                            .withHoverEvent(new HoverEvent(
+                                                                    HoverEvent.Action.SHOW_TEXT,
+                                                                    Text.of("Kliknij aby zedytować " + friendlyName))));
+
+                                            // Ikona usuwania
+                                            String removeIconStr = Messages.get("pricelist.icon.remove");
+                                            MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
+                                            removeIcon.setStyle(
+                                                    Style.EMPTY.withClickEvent(new ClickEvent(
+                                                                    ClickEvent.Action.RUN_COMMAND,
+                                                                    "/ltr remove " + friendlyName))
+                                                            .withHoverEvent(new HoverEvent(
+                                                                    HoverEvent.Action.SHOW_TEXT,
+                                                                    Text.of("Kliknij aby usunąć " + friendlyName))));
+
+                                            String itemLineStr = Messages.format("pricelist.item_line", Map.of("item", friendlyName, "price", priceStr));
+                                            MutableText itemLine = (MutableText) ColorUtils.translateColorCodes(itemLineStr);
+                                            MutableText lineText = ((MutableText) Text.of(""))
+                                                    .append(editIcon).append(Text.of(" "))
+                                                    .append(removeIcon).append(Text.of(" "))
+                                                    .append(itemLine).append(Text.of("\n"));
+                                            finalText.append(lineText);
                                         }
-                                        String shortPrice = PriceFormatter.formatPrice(parsed);
-
-                                        // Ikona edycji
-                                        String editIconStr = Messages.get("pricelist.icon.edit");
-                                        MutableText editIcon = (MutableText) ColorUtils.translateColorCodes(editIconStr);
-                                        editIcon.setStyle(
-                                                Style.EMPTY.withClickEvent(new ClickEvent(
-                                                                ClickEvent.Action.SUGGEST_COMMAND,
-                                                                "/ltr add " + priceStr + " " + itemName))
-                                                        .withHoverEvent(new HoverEvent(
-                                                                HoverEvent.Action.SHOW_TEXT,
-                                                                Text.of("Kliknij aby zedytować " + itemName))));
-
-                                        // Ikona usuwania
-                                        String removeIconStr = Messages.get("pricelist.icon.remove");
-                                        MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
-                                        removeIcon.setStyle(
-                                                Style.EMPTY.withClickEvent(new ClickEvent(
-                                                                ClickEvent.Action.RUN_COMMAND,
-                                                                "/ltr remove " + itemName))
-                                                        .withHoverEvent(new HoverEvent(
-                                                                HoverEvent.Action.SHOW_TEXT,
-                                                                Text.of("Kliknij aby usunąć " + itemName))));
-
-                                        String itemLineStr = Messages.format("pricelist.item_line", Map.of("item", itemName, "price", shortPrice));
-                                        MutableText itemLine = (MutableText) ColorUtils.translateColorCodes(itemLineStr);
-                                        MutableText lineText = ((MutableText) Text.of(""))
-                                                .append(editIcon).append(Text.of(" "))
-                                                .append(removeIcon).append(Text.of(" "))
-                                                .append(itemLine).append(Text.of("\n"));
-                                        finalText.append(lineText);
                                     }
+
                                     String msgHeader = Messages.format("command.list", Map.of("profile", activeProfile, "list", ""));
                                     MutableText header = (MutableText) ColorUtils.translateColorCodes(msgHeader);
                                     ctx.getSource().sendFeedback(header);
@@ -279,6 +266,9 @@ public class ClientCommandRegistration {
                                         .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
                                                 .suggests((context, builder) -> {
                                                     String remaining = builder.getRemaining().toLowerCase();
+                                                    if (remaining.startsWith("mc:")) {
+                                                        remaining = "minecraft:" + remaining.substring(3);
+                                                    }
                                                     if (remaining.contains("minecraft:")) {
                                                         Iterable<net.minecraft.util.Identifier> allItemIds = net.minecraft.util.registry.Registry.ITEM.getIds();
                                                         for (net.minecraft.util.Identifier itemId : allItemIds) {
@@ -364,14 +354,22 @@ public class ClientCommandRegistration {
                                             finalText.append(Text.of("\n"));
                                             for (String compositeKey : searchItems) {
                                                 String friendly = CompositeKeyUtil.getFriendlyName(compositeKey);
-                                                String lineTemplate = Messages.format("command.searchlist.list.line", Map.of("item", friendly));
-                                                MutableText lineText = (MutableText) ColorUtils.translateColorCodes(lineTemplate);
-                                                Style clickableStyle = Style.EMPTY.withClickEvent(new ClickEvent(
-                                                                ClickEvent.Action.RUN_COMMAND,
-                                                                "/ltr search remove " + friendly))
-                                                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                                                Text.of(Messages.get("command.searchlist.list.remove.hover"))));
-                                                lineText.setStyle(clickableStyle);
+                                                MutableText friendlyText = (MutableText) Text.of(friendly);
+
+                                                String removeIconStr = Messages.get("pricelist.icon.remove");
+                                                MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
+                                                removeIcon.setStyle(
+                                                        Style.EMPTY.withClickEvent(new ClickEvent(
+                                                                        ClickEvent.Action.RUN_COMMAND,
+                                                                        "/ltr search remove " + friendly))
+                                                                .withHoverEvent(new HoverEvent(
+                                                                        HoverEvent.Action.SHOW_TEXT,
+                                                                        Text.of(Messages.get("command.searchlist.list.remove.hover")))));
+
+                                                MutableText lineText = ((MutableText) Text.of(""))
+                                                        .append(removeIcon)
+                                                        .append(Text.of(" "))
+                                                        .append(friendlyText);
                                                 finalText.append(lineText).append(Text.of("\n"));
                                             }
                                             ctx.getSource().sendFeedback(finalText);
@@ -398,6 +396,7 @@ public class ClientCommandRegistration {
                 pe.maxPrice = storedPe.maxPrice;
                 pe.lore = storedPe.lore;
                 pe.material = storedPe.material;
+                pe.enchants = storedPe.enchants;
                 se.prices.add(pe);
             }
         }
@@ -409,10 +408,13 @@ public class ClientCommandRegistration {
             for (PriceEntry pe : entry.prices) {
                 String rawItem = pe.name;
                 if (pe.lore != null && !pe.lore.isEmpty()) {
-                    rawItem += "(" + pe.lore + ")";
+                    rawItem += "(\"" + pe.lore + "\")";
                 }
                 if (pe.material != null && !pe.material.isEmpty()) {
-                    rawItem += "[" + pe.material + "]";
+                    rawItem += "[\"" + pe.material + "\"]";
+                }
+                if (pe.enchants != null && !pe.enchants.isEmpty()) {
+                    rawItem += "{\"" + pe.enchants + "\"}";
                 }
                 ClientPriceListManager.addPriceEntry(rawItem, pe.maxPrice);
             }

@@ -8,7 +8,7 @@ import pl.lordtricker.ltrynek.client.config.ConfigLoader;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.config.ServersConfig;
-import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
+import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
