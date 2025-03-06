@@ -1,7 +1,8 @@
-package pl.lordtricker.ltrynek.client.search;
+package pl.lordtricker.ltrynek.client.manager;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.Text;
+import pl.lordtricker.ltrynek.client.util.CompositeKeyUtil;
 import pl.lordtricker.ltrynek.client.util.Messages;
 
 import java.util.ArrayList;
@@ -24,7 +25,7 @@ public class ClientSearchListManager {
     private static final Set<String> alreadyCountedSession = new HashSet<>();
 
     /**
-     * Dodaje nowy przedmiot do listy wyszukiwania (w formacie bazowaNazwa("Lore")["Material"]).
+     * Dodaje nowy przedmiot do listy wyszukiwania (w formacie: name(lore)[material]{enchants}).
      */
     public static void addItem(String rawItem) {
         String compositeKey = createCompositeKey(rawItem);
@@ -108,30 +109,48 @@ public class ClientSearchListManager {
 
     /**
      * Pomocnicza metoda do sprawdzania, czy zeskanowany item pasuje do compositeKey z listy.
+     * Rozbijamy compositeKey na cztery części: name, lore, material, enchants.
+     * Na razie porównujemy tylko name, lore oraz material.
      */
-    public static boolean matchesSearchTerm(String compositeKey, String noColorName, List<String> loreLines, String materialId) {
-        String[] parts = compositeKey.split("\\|", -1);
+    public static boolean matchesSearchTerm(String compositeKey, String noColorName, List<String> loreLines, String materialId, String enchantments) {
+        String[] parts = CompositeKeyUtil.splitCompositeKey(compositeKey);
         String baseName = parts[0];
         String lore = parts[1];
         String material = parts[2];
+        String compEnchants = parts.length > 3 ? parts[3] : "";
 
-        boolean nameMatches = noColorName.toLowerCase().contains(baseName);
+        String lowerName = noColorName.toLowerCase();
+        String lowerMaterial = materialId.toLowerCase();
+        String lowerBaseName = baseName.toLowerCase();
+        boolean nameMatches = lowerName.contains(lowerBaseName) || lowerMaterial.contains(lowerBaseName);
+
         boolean loreMatches = true;
         if (!lore.isEmpty()) {
             loreMatches = false;
             for (String line : loreLines) {
-                if (line.toLowerCase().contains(lore)) {
+                if (line.toLowerCase().contains(lore.toLowerCase())) {
                     loreMatches = true;
                     break;
                 }
             }
         }
+
         boolean materialMatches = true;
         if (!material.isEmpty()) {
             materialMatches = materialId.equalsIgnoreCase(material);
         }
-        return nameMatches && loreMatches && materialMatches;
+
+        boolean enchantMatches = true;
+        if (!compEnchants.isEmpty()) {
+            if (enchantments == null || enchantments.isEmpty() ||
+                    !enchantments.toLowerCase().contains(compEnchants.toLowerCase())) {
+                enchantMatches = false;
+            }
+        }
+
+        return nameMatches && loreMatches && materialMatches && enchantMatches;
     }
+
 
     public static class Stats {
         private int count;
