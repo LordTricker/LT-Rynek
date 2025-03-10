@@ -1,5 +1,6 @@
 package pl.lordtricker.ltrynek.client.config;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -13,6 +14,8 @@ public class ServerEntry {
     public String miniAlarmSound = "minecraft:ui.button.click";
     public String miniAlarmSoundStack = "minecraft:entity.player.levelup";
 
-
     public List<PriceEntry> prices = new ArrayList<>();
+
+    public transient Path sourceFile;
+
 }
