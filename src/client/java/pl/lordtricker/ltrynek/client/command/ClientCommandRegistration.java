@@ -412,6 +412,7 @@ public class ClientCommandRegistration {
                 }
             }
         }
+        saveAllConfigs(LtrynekClient.serversConfig);
     }
 
     private static void reinitProfilesFromConfig() {
