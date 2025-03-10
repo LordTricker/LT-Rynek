@@ -7,7 +7,7 @@
     "&8- &fChcesz wesprzec? &3https://buycoffee.to/lordtricker",
     " ",
     " &6| &eConfig zostal wygenerowany w miejscu:",
-    " &6| &e%appdata%/.minecraft/config/&6ltrynek-config.json",
+    " &6| &e.minecraft/config/LT-Mods/LT-Rynek/&6ltrynek-config.json",
     " ",
     "&8[&3L&bT &fRynek&8] &7Komendy pod &f/ltr pomoc",
     " "
@@ -60,7 +60,7 @@
     "&8[&3L&bT &fRynek&8] &7albo &f/ltr scan",
     " ",
     " &6| &eConfig zostal wygenerowany w miejscu:",
-    " &6| &e%appdata%/.minecraft/config/&6ltrynek-config.json",
+    " &6| &e.minecraft/config/LT-Mods/LT-Rynek/&6ltrynek-config.json",
     " "
   ],
   "player.join": [
