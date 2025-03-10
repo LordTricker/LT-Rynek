@@ -22,6 +22,7 @@ import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import static pl.lordtricker.ltrynek.client.config.ConfigLoader.saveAllConfigs;
 
 import java.util.List;
 import java.util.Map;
@@ -230,7 +231,7 @@ public class ClientCommandRegistration {
                                 .then(ClientCommandManager.literal("save")
                                         .executes(ctx -> {
                                             syncMemoryToConfig();
-                                            ConfigLoader.saveConfig(LtrynekClient.serversConfig);
+                                            saveAllConfigs(LtrynekClient.serversConfig);
                                             String msg = Messages.get("command.config.save.success");
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
                                             return 1;
@@ -392,9 +393,6 @@ public class ClientCommandRegistration {
     }
 
     private static void syncMemoryToConfig() {
-        for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
-            entry.prices.clear();
-        }
         Map<String, List<PriceEntry>> allProfiles = ClientPriceListManager.getAllProfiles();
         for (Map.Entry<String, List<PriceEntry>> profEntry : allProfiles.entrySet()) {
             String profileName = profEntry.getKey();
@@ -402,13 +400,16 @@ public class ClientCommandRegistration {
             ServerEntry se = findServerEntryByProfile(profileName);
             if (se == null) continue;
             for (PriceEntry storedPe : priceEntries) {
-                PriceEntry pe = new PriceEntry();
-                pe.name = storedPe.name;
-                pe.maxPrice = storedPe.maxPrice;
-                pe.lore = storedPe.lore;
-                pe.material = storedPe.material;
-                pe.enchants = storedPe.enchants;
-                se.prices.add(pe);
+                boolean exists = se.prices.stream().anyMatch(pe -> pe.name.equals(storedPe.name));
+                if (!exists) {
+                    PriceEntry pe = new PriceEntry();
+                    pe.name = storedPe.name;
+                    pe.maxPrice = storedPe.maxPrice;
+                    pe.lore = storedPe.lore;
+                    pe.material = storedPe.material;
+                    pe.enchants = storedPe.enchants;
+                    se.prices.add(pe);
+                }
             }
         }
     }
