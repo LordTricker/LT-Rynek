@@ -393,9 +393,6 @@ public class ClientCommandRegistration {
     }
 
     private static void syncMemoryToConfig() {
-        for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
-            entry.prices.clear();
-        }
         Map<String, List<PriceEntry>> allProfiles = ClientPriceListManager.getAllProfiles();
         for (Map.Entry<String, List<PriceEntry>> profEntry : allProfiles.entrySet()) {
             String profileName = profEntry.getKey();
