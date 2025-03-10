@@ -7,65 +7,135 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.Writer;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigLoader {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String CONFIG_FILE_NAME = "ltrynek-config.json";
+    private static final String MAIN_CONFIG_FILE_NAME = "ltrynek-config.json";
+    private static final Path MOD_CONFIG_DIR;
 
-    public static ServersConfig loadConfig() {
+    static {
         Path configDir = FabricLoader.getInstance().getConfigDir();
-        Path configFile = configDir.resolve(CONFIG_FILE_NAME);
-
-        if (!Files.exists(configFile)) {
-            ServersConfig defaultConfig = createDefaultConfig();
-            saveConfig(defaultConfig);
-            return defaultConfig;
-        }
-
-        try (Reader reader = Files.newBufferedReader(configFile)) {
-            ServersConfig config = GSON.fromJson(reader, ServersConfig.class);
-            if (config != null && config.servers != null) {
-                for (ServerEntry server : config.servers) {
-                    if (server.prices != null) {
-                        for (PriceEntry pe : server.prices) {
-                            if (pe.lore == null) {
-                                pe.lore = "";
-                            }
-                            if (pe.material == null) {
-                                pe.material = "";
-                            }
-                            if (pe.enchants == null) {
-                                pe.enchants = null;
-                            }
-                        }
-                    }
-                }
+        MOD_CONFIG_DIR = configDir.resolve("LT-Mods").resolve("LT-Rynek");
+        try {
+            if (!Files.exists(MOD_CONFIG_DIR)) {
+                Files.createDirectories(MOD_CONFIG_DIR);
             }
-            return config;
         } catch (IOException e) {
             e.printStackTrace();
-            return new ServersConfig();
         }
     }
 
-    public static void saveConfig(ServersConfig config) {
-        Path configDir = FabricLoader.getInstance().getConfigDir();
-        Path configFile = configDir.resolve(CONFIG_FILE_NAME);
+    public static ServersConfig loadConfig() {
+        Path mainConfigFile = MOD_CONFIG_DIR.resolve(MAIN_CONFIG_FILE_NAME);
+        ServersConfig config;
+        if (!Files.exists(mainConfigFile)) {
+            config = createDefaultConfig();
+            saveAllConfigs(config);
+        } else {
+            try (Reader reader = Files.newBufferedReader(mainConfigFile)) {
+                config = GSON.fromJson(reader, ServersConfig.class);
+                if (config == null) {
+                    config = createDefaultConfig();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                config = createDefaultConfig();
+            }
+        }
 
-        try (Writer writer = Files.newBufferedWriter(configFile)) {
-            GSON.toJson(config, writer);
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(MOD_CONFIG_DIR, "*.json")) {
+            for (Path entry : stream) {
+                if (entry.getFileName().toString().equals(MAIN_CONFIG_FILE_NAME)) {
+                    continue;
+                }
+                try (Reader miniReader = Files.newBufferedReader(entry)) {
+                    ServerEntry miniServer = GSON.fromJson(miniReader, ServerEntry.class);
+                    if (miniServer == null) {
+                        System.err.println("Mini config " + entry.getFileName() + " jest niepoprawny – nie udało się sparsować JSON.");
+                        continue;
+                    }
+                    if (miniServer.domains == null || miniServer.domains.isEmpty()) {
+                        System.err.println("Mini config " + entry.getFileName() + " jest niepoprawny – brak wymaganych domen.");
+                        continue;
+                    }
+                    String fileName = entry.getFileName().toString();
+                    String profileNameFromFile = fileName.substring(0, fileName.lastIndexOf('.'));
+                    miniServer.profileName = profileNameFromFile;
+
+                    if (miniServer.prices == null) {
+                        miniServer.prices = new ArrayList<>();
+                    }
+                    if (miniServer.loreRegex == null) {
+                        miniServer.loreRegex = "Cena: (\\d+)";
+                    }
+                    if (miniServer.highlightColor == null) {
+                        miniServer.highlightColor = "#80FF00";
+                    }
+                    if (miniServer.highlightColorStack == null) {
+                        miniServer.highlightColorStack = "#FF8000";
+                    }
+                    if (miniServer.miniAlarmSound == null) {
+                        miniServer.miniAlarmSound = "minecraft:ui.button.click";
+                    }
+                    if (miniServer.miniAlarmSoundStack == null) {
+                        miniServer.miniAlarmSoundStack = "minecraft:entity.player.levelup";
+                    }
+
+                    config.servers.removeIf(se -> se.profileName.equalsIgnoreCase(miniServer.profileName));
+
+                    miniServer.sourceFile = entry;
+
+                    config.servers.add(miniServer);
+                } catch (Exception ex) {
+                    System.err.println("Błąd podczas ładowania mini configu " + entry.getFileName() + ": " + ex.getMessage());
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        return config;
+    }
+
+    /**
+     * Zapisuje konfigurację, rozdzielając dane:
+     * - Wpisy bez mini configów trafiają do głównego pliku,
+     * - Wpisy z mini configami są zapisywane do swoich plików.
+     */
+    public static void saveAllConfigs(ServersConfig config) {
+        List<ServerEntry> mainServers = new ArrayList<>();
+        for (ServerEntry entry : config.servers) {
+            if (entry.sourceFile == null) {
+                mainServers.add(entry);
+            }
+        }
+        ServersConfig mainConfig = new ServersConfig();
+        mainConfig.defaultProfile = config.defaultProfile;
+        mainConfig.soundsEnabled = config.soundsEnabled;
+        mainConfig.servers = mainServers;
+
+        Path mainConfigFile = MOD_CONFIG_DIR.resolve(MAIN_CONFIG_FILE_NAME);
+        try (Writer writer = Files.newBufferedWriter(mainConfigFile)) {
+            GSON.toJson(mainConfig, writer);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        for (ServerEntry entry : config.servers) {
+            if (entry.sourceFile != null) {
+                try (Writer writer = Files.newBufferedWriter(entry.sourceFile)) {
+                    GSON.toJson(entry, writer);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     /**
-     * Tworzy domyślny config z przykładowymi wartościami, uwzględniając nowe pola:
-     * - loreRegex, highlightColor, highlightColorStack,
-     * - miniAlarmSound oraz miniAlarmSoundStack.
+     * Tworzy domyślny config z przykładowymi wartościami.
      */
     private static ServersConfig createDefaultConfig() {
         ServersConfig cfg = new ServersConfig();
