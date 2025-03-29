@@ -65,7 +65,7 @@ public class ClientSearchListManager {
                     }
                 });
             }
-        }, 300_000); // 5 minut = 300000 ms
+        }, 300_000);
     }
 
     public static void stopSearch() {
