@@ -60,7 +60,6 @@ public abstract class HandledScreenMixin {
 			}
 		}
 
-		// Odtwarzanie dźwięku, jeśli jest włączone i zmieniła się liczba trafień
 		if (LtrynekClient.serversConfig != null && LtrynekClient.serversConfig.soundsEnabled) {
 			if (matchedCount != lastMatchedCount && matchedCount > 0) {
 				playAlarmSound(matchedCount);
@@ -69,14 +68,12 @@ public abstract class HandledScreenMixin {
 		lastMatchedCount = matchedCount;
 	}
 
-	// 1) Wzorzec dla nowszych wersji (1.21+), np.:
-	// ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>5
+
 	private static final Pattern NEWER_PATTERN = Pattern.compile(
 			"ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)"
 	);
 
-	// 2) Wzorzec dla starszych wersji, np.:
-	// {id:"minecraft:unbreaking",lvl:3s}
+
 	private static final Pattern OLDER_PATTERN = Pattern.compile(
 			"\\{id:\"([^\"]+)\",lvl:(\\d+)s\\}"
 	);
@@ -85,7 +82,6 @@ public abstract class HandledScreenMixin {
 		ItemStack stack = slot.getStack();
 		if (stack.isEmpty()) return false;
 
-		// 1) Pobieramy tooltip i usuwamy kolory z każdej linii
 		List<Text> tooltip = stack.getTooltip(Item.TooltipContext.DEFAULT, null, TooltipType.BASIC);
 		List<String> loreLines = new ArrayList<>();
 		for (Text textLine : tooltip) {
@@ -135,7 +131,6 @@ public abstract class HandledScreenMixin {
 		}
 
 
-		// 2) Pobieramy informację o serwerze (by wyciągnąć np. loreRegex) - to część Twojego kodu
 		String activeProfile = ClientPriceListManager.getActiveProfile();
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
 		if (entry == null) return false;
@@ -148,7 +143,6 @@ public abstract class HandledScreenMixin {
 		int highlightColor = parseColor(colorStr);
 		int highlightColorStack = parseColor(colorStackStr);
 
-		// 3) Wyszukujemy cenę z tooltipu za pomocą loreRegex (tak jak robiłeś wcześniej)
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
 		for (String plain : loreLines) {
@@ -164,7 +158,6 @@ public abstract class HandledScreenMixin {
 		}
 		if (foundPrice < 0) return false;
 
-		// 4) Podstawowe informacje o stacku
 		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
 		String displayName = stack.getName().getString();
@@ -174,7 +167,6 @@ public abstract class HandledScreenMixin {
 		boolean isStack = stackSize > 1;
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
-		// 5) Obsługa systemu searchlist (jeśli aktywny)
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
@@ -188,10 +180,8 @@ public abstract class HandledScreenMixin {
 			}
 		}
 
-		// 6) Wyszukujemy dopasowany wpis (uwzględniając lore, nazwę i materiał) z PriceList
 		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId, enchantmentsString);
 		if (matchedEntry == null) {
-			// Nie znaleziono wpisu pasującego do nazwy, lore i/lub materiału
 			return false;
 		}
 
@@ -203,11 +193,9 @@ public abstract class HandledScreenMixin {
 			if (alphaF < 0.30) alphaF = 0.30;
 			int computedAlpha = (int) (alphaF * 255.0) & 0xFF;
 
-			// Kolor dla stacka vs. pojedynczego itemu
 			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF) : (highlightColor & 0x00FFFFFF);
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
 
-			// Rysujemy półprzezroczysty overlay
 			int realX = this.x + slot.x;
 			int realY = this.y + slot.y;
 			context.fill(realX, realY, realX + 16, realY + 16, dynamicColor);
@@ -249,8 +237,8 @@ public abstract class HandledScreenMixin {
 		SoundEvent soundEvent = Registries.SOUND_EVENT.get(id);
 		if (soundEvent == null) return;
 		Timer timer = new Timer();
-		long initialDelay = 300; // 0.3 sekundy
-		long interval = 150;     // 0.15 sekundy odstęp
+		long initialDelay = 300;
+		long interval = 150;
 		for (int i = 0; i < times; i++) {
 			long delay = initialDelay + i * interval;
 			timer.schedule(new TimerTask() {
