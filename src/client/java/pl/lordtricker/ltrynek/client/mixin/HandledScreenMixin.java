@@ -68,14 +68,10 @@ public abstract class HandledScreenMixin {
 		lastMatchedCount = matchedCount;
 	}
 
-	// 1) Wzorzec dla nowszych wersji (1.21+), np.:
-	// ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>5
 	private static final Pattern NEWER_PATTERN = Pattern.compile(
 			"ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)"
 	);
 
-	// 2) Wzorzec dla starszych wersji, np.:
-	// {id:"minecraft:unbreaking",lvl:3s}
 	private static final Pattern OLDER_PATTERN = Pattern.compile(
 			"\\{id:\"([^\"]+)\",lvl:(\\d+)s\\}"
 	);
@@ -228,8 +224,8 @@ public abstract class HandledScreenMixin {
 		SoundEvent soundEvent = Registries.SOUND_EVENT.get(id);
 		if (soundEvent == null) return;
 		Timer timer = new Timer();
-		long initialDelay = 300; // 0.3 sekundy
-		long interval = 150;     // odstęp 0.15 sekundy
+		long initialDelay = 300;
+		long interval = 150;
 		for (int i = 0; i < times; i++) {
 			long delay = initialDelay + i * interval;
 			timer.schedule(new TimerTask() {
