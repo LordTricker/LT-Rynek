@@ -45,14 +45,10 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 	 * Reszta logiki (maxPrice, searchList) działa wg. nowej wersji.
 	 */
 
-	// 1) Wzorzec dla nowszych wersji (1.21+), np.:
-	// ResourceKey[minecraft:enchantment / minecraft:sharpness]=Enchantment Sharpness}=>5
 	private static final Pattern NEWER_PATTERN = Pattern.compile(
 			"ResourceKey\\[\\s*minecraft:enchantment\\s*/\\s*minecraft:([^\\]]+)\\]\\s*=Enchantment [^}]+}\\s*=>\\s*(\\d+)"
 	);
 
-	// 2) Wzorzec dla starszych wersji, np.:
-	// {id:"minecraft:unbreaking",lvl:3s}
 	private static final Pattern OLDER_PATTERN = Pattern.compile(
 			"\\{id:\"([^\"]+)\",lvl:(\\d+)s\\}"
 	);
@@ -65,7 +61,6 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		ServerEntry entry = findServerEntryByProfile(activeProfile);
 		if (entry == null) return;
 
-		// Konfiguracja z profilu
 		String loreRegex = entry.loreRegex;
 		String colorStr = entry.highlightColor;
 		String colorStackStr = (entry.highlightColorStack == null || entry.highlightColorStack.isEmpty())
@@ -77,13 +72,11 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		ItemStack stack = slot.getStack();
 		if (stack.isEmpty()) return;
 
-		// Pobieramy lore z NBT – jak w 1.19.4
 		if (!stack.hasNbt()) return;
 		NbtCompound display = stack.getSubNbt("display");
 		if (display == null || !display.contains("Lore", 9)) return;
 		NbtList loreList = display.getList("Lore", 8);
 
-		// Przygotowujemy listę linii lore (bez kodów kolorów)
 		List<String> loreLines = new ArrayList<>();
 		double foundPrice = -1;
 		Pattern pattern = Pattern.compile(loreRegex);
@@ -94,14 +87,12 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 				String plain = textLine.getString();
 				String noColorLine = ColorStripUtils.stripAllColorsAndFormats(plain);
 				loreLines.add(noColorLine);
-				// Szukamy ceny przy pomocy regexa
 				Matcher m = pattern.matcher(noColorLine);
 				if (m.find()) {
 					String priceGroup = m.group(1);
 					double parsedPrice = parsePriceWithSuffix(priceGroup);
 					if (parsedPrice >= 0) {
 						foundPrice = parsedPrice;
-						// Nie przerywamy pętli, by zebrać pełną listę loreLines do searchList
 					}
 				}
 			}
@@ -148,7 +139,6 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			loreLines.add(enchantmentsString);
 		}
 
-		// Pobieramy dane przedmiotu
 		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
 		String displayName = stack.getName().getString();
@@ -158,7 +148,6 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		boolean isStack = stackSize > 1;
 		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
 
-		// Aktualizacja searchList – logika wg. nowej wersji
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
 			if (!ClientSearchListManager.isAlreadyCounted(uniqueKey)) {
@@ -171,12 +160,10 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			}
 		}
 
-		// Pobieramy maxPrice wg. nowej logiki
 		PriceEntry matchedEntry = ClientPriceListManager.findMatchingPriceEntry(noColorName, loreLines, materialId, enchantmentsString);
 		if (matchedEntry == null) return;
 		double maxPrice = matchedEntry.maxPrice;
 
-		// Stary sposób rysowania – podświetlenie slotu
 		if (finalPrice <= maxPrice) {
 			double ratio = finalPrice / maxPrice;
 			if (ratio > 1.0) ratio = 1.0;
@@ -186,7 +173,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			int baseRGB = isStack ? (highlightColorStack & 0x00FFFFFF) : (highlightColor & 0x00FFFFFF);
 			int dynamicColor = (computedAlpha << 24) | baseRGB;
 			fill(matrices, slot.x, slot.y, slot.x + 16, slot.y + 16, dynamicColor);
-			matchedCount++; // zwiększamy licznik trafień (używany do alarmu)
+			matchedCount++;
 		}
 	}
 
@@ -202,7 +189,7 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 			}
 		}
 		lastMatchedCount = matchedCount;
-		matchedCount = 0; // reset licznika po renderze
+		matchedCount = 0;
 	}
 
 	private void playAlarmSound(int count) {
@@ -227,8 +214,8 @@ public abstract class HandledScreenMixin extends DrawableHelper {
 		SoundEvent soundEvent = Registries.SOUND_EVENT.get(id);
 		if (soundEvent == null) return;
 		Timer timer = new Timer();
-		long initialDelay = 300; // 0.3 sekundy
-		long interval = 150;     // 0.15 sekundy odstęp
+		long initialDelay = 300;
+		long interval = 150;
 		for (int i = 0; i < times; i++) {
 			long delay = initialDelay + i * interval;
 			timer.schedule(new TimerTask() {
