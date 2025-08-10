@@ -143,6 +143,7 @@ public class ClientCommandRegistration {
                                                     ));
 
                                                     ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                    syncMemoryToConfig();
                                                     return 1;
                                                 })
                                         )
@@ -162,6 +163,7 @@ public class ClientCommandRegistration {
                                                     "profile", activeProfile
                                             ));
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            syncMemoryToConfig();
                                             return 1;
                                         })
                                 )
@@ -260,6 +262,7 @@ public class ClientCommandRegistration {
                                             LtrynekClient.serversConfig.soundsEnabled = true;
                                             String msg = Messages.get("command.sounds.enabled");
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            saveAllConfigs(LtrynekClient.serversConfig);
                                             return 1;
                                         })
                                 )
@@ -268,6 +271,7 @@ public class ClientCommandRegistration {
                                             LtrynekClient.serversConfig.soundsEnabled = false;
                                             String msg = Messages.get("command.sounds.disabled");
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            saveAllConfigs(LtrynekClient.serversConfig);
                                             return 1;
                                         })
                                 )
@@ -393,25 +397,26 @@ public class ClientCommandRegistration {
     }
 
     private static void syncMemoryToConfig() {
+        if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null) {
+            return;
+        }
         Map<String, List<PriceEntry>> allProfiles = ClientPriceListManager.getAllProfiles();
-        for (Map.Entry<String, List<PriceEntry>> profEntry : allProfiles.entrySet()) {
-            String profileName = profEntry.getKey();
-            List<PriceEntry> priceEntries = profEntry.getValue();
-            ServerEntry se = findServerEntryByProfile(profileName);
-            if (se == null) continue;
-            for (PriceEntry storedPe : priceEntries) {
-                boolean exists = se.prices.stream().anyMatch(pe -> pe.name.equals(storedPe.name));
-                if (!exists) {
-                    PriceEntry pe = new PriceEntry();
-                    pe.name = storedPe.name;
-                    pe.maxPrice = storedPe.maxPrice;
-                    pe.lore = storedPe.lore;
-                    pe.material = storedPe.material;
-                    pe.enchants = storedPe.enchants;
-                    se.prices.add(pe);
-                }
+
+        for (ServerEntry se : LtrynekClient.serversConfig.servers) {
+            List<PriceEntry> memList = allProfiles.getOrDefault(se.profileName, List.of());
+
+            se.prices.clear();
+            for (PriceEntry src : memList) {
+                PriceEntry pe = new PriceEntry();
+                pe.name = src.name;
+                pe.maxPrice = src.maxPrice;
+                pe.lore = src.lore;
+                pe.material = src.material;
+                pe.enchants = src.enchants;
+                se.prices.add(pe);
             }
         }
+
         saveAllConfigs(LtrynekClient.serversConfig);
     }
 
