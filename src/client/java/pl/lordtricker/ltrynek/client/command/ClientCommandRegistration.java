@@ -115,6 +115,9 @@ public class ClientCommandRegistration {
                                                                 "profile", activeProfile
                                                         ));
                                                         ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+
+                                                        // Auto-save config after adding item
+                                                        autoSaveConfig();
                                                     } catch (NumberFormatException e) {
                                                         ctx.getSource().sendError(Text.literal("Invalid price format: " + maxPriceStr));
                                                     }
@@ -137,6 +140,9 @@ public class ClientCommandRegistration {
                                                     "profile", activeProfile
                                             ));
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+
+                                            // Auto-save config after removing item
+                                            autoSaveConfig();
                                             return 1;
                                         })
                                 )
@@ -227,9 +233,7 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("config")
                                 .then(ClientCommandManager.literal("save")
                                         .executes(ctx -> {
-                                            syncMemoryToConfig();
-
-                                            ConfigLoader.saveConfig(LtrynekClient.serversConfig);
+                                            autoSaveConfig();
 
                                             String msg = Messages.get("command.config.save.success");
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
@@ -268,7 +272,11 @@ public class ClientCommandRegistration {
 
             ServerEntry se = findServerEntryByProfile(profileName);
             if (se == null) {
-                continue;
+                se = new ServerEntry();
+                se.profileName = profileName;
+                LtrynekClient.serversConfig.servers.add(se);
+            } else {
+                se.prices.clear();
             }
 
             for (Map.Entry<String, Double> itemEntry : items.entrySet()) {
@@ -281,6 +289,14 @@ public class ClientCommandRegistration {
                 se.prices.add(pe);
             }
         }
+    }
+
+    /**
+     * Synchronizes and saves configuration to disk.
+     */
+    private static void autoSaveConfig() {
+        syncMemoryToConfig();
+        ConfigLoader.saveConfig(LtrynekClient.serversConfig);
     }
 
     /**
