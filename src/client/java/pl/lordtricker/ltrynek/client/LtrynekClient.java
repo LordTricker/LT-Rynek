@@ -2,6 +2,7 @@ package pl.lordtricker.ltrynek.client;
 
 import pl.lordtricker.ltrynek.client.command.ClientCommandRegistration;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
+import pl.lordtricker.ltrynek.client.config.ConfigSaver;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.config.ServersConfig;
@@ -30,27 +31,29 @@ public class LtrynekClient implements ClientModInitializer {
 		}
 		ClientPriceListManager.setActiveProfile(serversConfig.defaultProfile);
 
-		ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
-			String address = getServerAddress();
-			ServerEntry entry = findServerEntry(address);
-			if (entry != null) {
-				ClientPriceListManager.setActiveProfile(entry.profileName);
-				if (client.player != null) {
-					String welcomeMsg = Messages.format("player.join", Map.of("profile", entry.profileName));
-					client.player.sendMessage(ColorUtils.translateColorCodes(welcomeMsg), false);
-				}
-			} else {
-				String def = serversConfig.defaultProfile;
-				ClientPriceListManager.setActiveProfile(def);
-				if (client.player != null) {
-					String welcomeMsg = Messages.format("player.join", Map.of("profile", def));
-					client.player.sendMessage(ColorUtils.translateColorCodes(welcomeMsg), false);
-				}
-			}
-		});
+                ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+                        String address = getServerAddress();
+                        ServerEntry entry = findServerEntry(address);
+                        if (entry != null) {
+                                ClientPriceListManager.setActiveProfile(entry.profileName);
+                                if (client.player != null) {
+                                        String welcomeMsg = Messages.format("player.join", Map.of("profile", entry.profileName));
+                                        client.player.sendMessage(ColorUtils.translateColorCodes(welcomeMsg), false);
+                                }
+                        } else {
+                                String def = serversConfig.defaultProfile;
+                                ClientPriceListManager.setActiveProfile(def);
+                                if (client.player != null) {
+                                        String welcomeMsg = Messages.format("player.join", Map.of("profile", def));
+                                        client.player.sendMessage(ColorUtils.translateColorCodes(welcomeMsg), false);
+                                }
+                        }
+                });
 
-		ClientCommandRegistration.registerCommands();
-	}
+                ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ConfigSaver.save());
+
+                ClientCommandRegistration.registerCommands();
+        }
 
 	private String getServerAddress() {
 		if (MinecraftClient.getInstance().getCurrentServerEntry() != null) {

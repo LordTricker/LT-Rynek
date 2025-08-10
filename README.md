@@ -32,7 +32,7 @@ Dostępnę Releasy: https://github.com/LordTricker/LT-Rynek/releases
 | `/ltr remove <przedmiot>` | Usuwa przedmiot z profilu |
 | `/ltr list` | Wyświetla przedmioty w aktywnym profilu |
 | `/ltr pomoc` | Lista dostępnych komend |
-| `/ltr config save` | Zapisuje konfigurację |
+| `/ltr config save` | Ręcznie zapisuje konfigurację (zapis następuje też automatycznie) |
 | `/ltr config reload` | Przeładowuje dane z konfiguracji |
 
 ## 🔧 Instalacja

@@ -4,6 +4,7 @@ import pl.lordtricker.ltrynek.client.ColorUtils;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
 import pl.lordtricker.ltrynek.client.Messages;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
+import pl.lordtricker.ltrynek.client.config.ConfigSaver;
 import pl.lordtricker.ltrynek.client.config.PriceEntry;
 import pl.lordtricker.ltrynek.client.config.ServerEntry;
 import pl.lordtricker.ltrynek.client.price.ClientPriceListManager;
@@ -48,6 +49,8 @@ public class ClientCommandRegistration {
                                         .executes(ctx -> {
                                             String profile = StringArgumentType.getString(ctx, "profile");
                                             ClientPriceListManager.setActiveProfile(profile);
+                                            LtrynekClient.serversConfig.defaultProfile = profile;
+                                            ConfigSaver.save();
 
                                             String msg = Messages.format("command.defaultprofile.success", Map.of("profile", profile));
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
@@ -115,6 +118,7 @@ public class ClientCommandRegistration {
                                                                 "profile", activeProfile
                                                         ));
                                                         ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                        ConfigSaver.save();
                                                     } catch (NumberFormatException e) {
                                                         ctx.getSource().sendError(Text.literal("Invalid price format: " + maxPriceStr));
                                                     }
@@ -137,6 +141,7 @@ public class ClientCommandRegistration {
                                                     "profile", activeProfile
                                             ));
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ConfigSaver.save();
                                             return 1;
                                         })
                                 )
@@ -227,9 +232,7 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("config")
                                 .then(ClientCommandManager.literal("save")
                                         .executes(ctx -> {
-                                            syncMemoryToConfig();
-
-                                            ConfigLoader.saveConfig(LtrynekClient.serversConfig);
+                                            ConfigSaver.save();
 
                                             String msg = Messages.get("command.config.save.success");
                                             ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
@@ -254,36 +257,6 @@ public class ClientCommandRegistration {
     }
 
     /**
-     * Synchronizuje dane z pamięci (ClientPriceListManager) do obiektu LtrynekClient.serversConfig,
-     * tak aby /ltrynek config save mógł zapisać te zmiany do pliku.
-     */
-    private static void syncMemoryToConfig() {
-        for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
-            entry.prices.clear();
-        }
-        Map<String, Map<String, Double>> allProfiles = ClientPriceListManager.getAllProfiles();
-        for (Map.Entry<String, Map<String, Double>> profEntry : allProfiles.entrySet()) {
-            String profileName = profEntry.getKey();
-            Map<String, Double> items = profEntry.getValue();
-
-            ServerEntry se = findServerEntryByProfile(profileName);
-            if (se == null) {
-                continue;
-            }
-
-            for (Map.Entry<String, Double> itemEntry : items.entrySet()) {
-                String itemName = itemEntry.getKey();
-                double maxPrice = itemEntry.getValue();
-
-                PriceEntry pe = new PriceEntry();
-                pe.name = itemName;
-                pe.maxPrice = maxPrice;
-                se.prices.add(pe);
-            }
-        }
-    }
-
-    /**
      * Czyści i na nowo inicjalizuje ClientPriceListManager z LtrynekClient.serversConfig.
      */
     private static void reinitProfilesFromConfig() {
@@ -296,15 +269,4 @@ public class ClientCommandRegistration {
         ClientPriceListManager.setActiveProfile(LtrynekClient.serversConfig.defaultProfile);
     }
 
-    /**
-     * Znajduje ServerEntry w LtrynekClient.serversConfig dla danego profileName.
-     */
-    private static ServerEntry findServerEntryByProfile(String profileName) {
-        for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
-            if (entry.profileName.equals(profileName)) {
-                return entry;
-            }
-        }
-        return null;
-    }
 }
