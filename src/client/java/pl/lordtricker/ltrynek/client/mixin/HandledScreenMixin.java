@@ -82,12 +82,18 @@ public abstract class HandledScreenMixin {
 		ItemStack stack = slot.getStack();
 		if (stack.isEmpty()) return false;
 
+        String displayName = stack.getName().getString();
+        String noColorName = ColorStripUtils.stripAllColorsAndFormats(displayName);
+
 		PlayerEntity player = MinecraftClient.getInstance().player;
 		List<Text> tooltip = stack.getTooltip(player, TooltipContext.BASIC);
-
 		List<String> loreLines = new ArrayList<>();
-		for (Text line : tooltip) {
-			String plain = line.getString();
+
+        for (int i = 0; i < tooltip.size(); i++) {
+            // Skip the first line which is the item name; we only want lore
+            if (i == 0) continue;
+            Text textLine = tooltip.get(i);
+			String plain = textLine.getString();
 			String noColorLine = ColorStripUtils.stripAllColorsAndFormats(plain);
 			loreLines.add(noColorLine);
 		}
@@ -161,8 +167,6 @@ public abstract class HandledScreenMixin {
 
 		Identifier id = Registries.ITEM.getId(stack.getItem());
 		String materialId = id.toString();
-		String displayName = stack.getName().getString();
-		String noColorName = ColorStripUtils.stripAllColorsAndFormats(displayName);
 
 		int stackSize = stack.getCount();
 		boolean isStack = stackSize > 1;
