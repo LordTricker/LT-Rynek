@@ -12,6 +12,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.MinecraftClient;
 import pl.lordtricker.ltrynek.client.util.ColorUtils;
 import pl.lordtricker.ltrynek.client.util.Messages;
+import pl.lordtricker.ltrynek.client.util.RemoteAdConfig;
 
 import java.util.Map;
 
@@ -23,6 +24,9 @@ public class LtrynekClient implements ClientModInitializer {
 		ToggleScanner.init();
 
 		serversConfig = ConfigLoader.loadConfig();
+
+        // Preload remote ad config (server name/address) asynchronously
+        RemoteAdConfig.preloadAsync();
 
 		for (ServerEntry entry : serversConfig.servers) {
 			ClientPriceListManager.setActiveProfile(entry.profileName);

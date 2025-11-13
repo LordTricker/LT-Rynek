@@ -7,6 +7,5 @@ public class ServersConfig {
     public String defaultProfile = "default";
     public List<ServerEntry> servers = new ArrayList<>();
     public boolean soundsEnabled = false;
-    // Toggle for advertising server injection (default enabled via loader)
-    public Boolean adsEnabled;
+    public static Boolean adsEnabled;
 }
