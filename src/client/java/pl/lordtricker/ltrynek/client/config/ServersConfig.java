@@ -7,5 +7,5 @@ public class ServersConfig {
     public String defaultProfile = "default";
     public List<ServerEntry> servers = new ArrayList<>();
     public boolean soundsEnabled = false;
-    public Boolean adsEnabled;
+    public static Boolean adsEnabled;
 }

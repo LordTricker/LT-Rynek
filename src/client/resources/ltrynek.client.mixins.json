@@ -6,13 +6,15 @@
 		"HandledScreenMixin",
 		"ScreenHandlerAccessor",
         "ServerListMixin",
-        "ServerListAccessor"
+        "ServerListAccessor",
+        "MultiplayerScreenMixin"
 	],
 	"client": [
 		"HandledScreenMixin",
 		"ScreenHandlerAccessor",
         "ServerListMixin",
-        "ServerListAccessor"
+        "ServerListAccessor",
+        "MultiplayerScreenMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1
