@@ -40,6 +40,12 @@ public class ConfigLoader {
                 if (config == null) {
                     config = createDefaultConfig();
                 }
+                // Ensure default for new fields
+                if (config.adsEnabled == null) {
+                    config.adsEnabled = true;
+                    // Persist the new default into the main config file
+                    saveAllConfigs(config);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
                 config = createDefaultConfig();
@@ -114,6 +120,7 @@ public class ConfigLoader {
         ServersConfig mainConfig = new ServersConfig();
         mainConfig.defaultProfile = config.defaultProfile;
         mainConfig.soundsEnabled = config.soundsEnabled;
+        mainConfig.adsEnabled = (config.adsEnabled == null) ? Boolean.TRUE : config.adsEnabled;
         mainConfig.servers = mainServers;
 
         Path mainConfigFile = MOD_CONFIG_DIR.resolve(MAIN_CONFIG_FILE_NAME);
@@ -140,6 +147,7 @@ public class ConfigLoader {
     private static ServersConfig createDefaultConfig() {
         ServersConfig cfg = new ServersConfig();
         cfg.defaultProfile = "default";
+        cfg.adsEnabled = true;
 
         ServerEntry server1 = new ServerEntry();
         server1.domains = List.of("minestar.pl");

@@ -4,11 +4,15 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"HandledScreenMixin",
-		"ScreenHandlerAccessor"
+		"ScreenHandlerAccessor",
+		"ServerListMixin",
+		"ServerListAccessor"
 	],
 	"client": [
 		"HandledScreenMixin",
-		"ScreenHandlerAccessor"
+		"ScreenHandlerAccessor",
+		"ServerListMixin",
+		"ServerListAccessor"
 	],
 	"injectors": {
 		"defaultRequire": 1
