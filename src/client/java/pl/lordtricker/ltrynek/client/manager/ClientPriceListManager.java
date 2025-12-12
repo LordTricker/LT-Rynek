@@ -101,20 +101,39 @@ public class ClientPriceListManager {
     public static PriceEntry findMatchingPriceEntry(String noColorName, List<String> loreLines, String materialId, String enchantments) {
         List<PriceEntry> entries = priceLists.get(activeProfile);
         if (entries == null) return null;
+
+        PriceEntry best = null;
+        int bestScore = -1;
+
+        String lowerName = noColorName.toLowerCase();
+        String lowerMaterialId = materialId.toLowerCase();
+        String lowerEnchantments = enchantments == null ? "" : enchantments.toLowerCase();
+
         for (PriceEntry pe : entries) {
+            int score = 0;
+
+            // Material check (strict equality if provided)
             if (pe.material != null && !pe.material.isEmpty()) {
                 if (!materialId.equalsIgnoreCase(pe.material)) {
                     continue;
                 }
+                score += 1000; // prefer rules with explicit material
             }
+
+            // Name check (contains; prefer longer/ exact matches)
             if (!pe.name.isEmpty()) {
-                String lowerName = noColorName.toLowerCase();
-                String lowerMaterial = materialId.toLowerCase();
                 String lowerEntryName = pe.name.toLowerCase();
-                if (!lowerName.contains(lowerEntryName) && !lowerMaterial.contains(lowerEntryName)) {
+                boolean nameMatches = lowerName.contains(lowerEntryName) || lowerMaterialId.contains(lowerEntryName);
+                if (!nameMatches) {
                     continue;
                 }
+                score += Math.min(500, lowerEntryName.length());
+                if (lowerName.equals(lowerEntryName)) {
+                    score += 200; // exact name match bonus
+                }
             }
+
+            // Lore substring check
             if (pe.lore != null && !pe.lore.isEmpty()) {
                 boolean foundLore = false;
                 for (String line : loreLines) {
@@ -126,16 +145,23 @@ public class ClientPriceListManager {
                 if (!foundLore) {
                     continue;
                 }
+                score += 50;
             }
+
+            // Enchant check
             if (pe.enchants != null && !pe.enchants.isEmpty()) {
-                if (enchantments == null || enchantments.isEmpty() ||
-                        !enchantments.toLowerCase().contains(pe.enchants.toLowerCase())) {
+                if (lowerEnchantments.isEmpty() || !lowerEnchantments.contains(pe.enchants.toLowerCase())) {
                     continue;
                 }
+                score += 25;
             }
-            return pe;
+
+            if (score > bestScore) {
+                bestScore = score;
+                best = pe;
+            }
         }
-        return null;
+        return best;
     }
 
 

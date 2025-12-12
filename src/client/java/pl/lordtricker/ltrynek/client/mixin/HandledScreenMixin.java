@@ -167,7 +167,7 @@ public abstract class HandledScreenMixin {
 
 		int stackSize = stack.getCount();
 		boolean isStack = stackSize > 1;
-		double finalPrice = isStack ? (foundPrice / stackSize) : foundPrice;
+		double finalPrice = foundPrice;
 
 		if (ClientSearchListManager.isSearchActive()) {
 			String uniqueKey = slot.id + "|" + noColorName + "|" + finalPrice + "|" + stackSize;
@@ -252,7 +252,7 @@ public abstract class HandledScreenMixin {
 	}
 
 	private double parsePriceWithSuffix(String raw) {
-		raw = raw.trim().replace(" ", "");
+		raw = raw.trim().replaceAll("[\\s\\u00A0\\u202F]+", "");
 		String lower = raw.toLowerCase();
 		double multiplier = 1.0;
 		if (lower.endsWith("mld")) {
@@ -265,16 +265,33 @@ public abstract class HandledScreenMixin {
 			multiplier = 1000.0;
 			raw = raw.substring(0, raw.length() - 1);
 		}
-		if (!raw.contains(".")) {
-			int i = raw.indexOf(',', raw.length() - 3);
-			if (i != -1) raw = raw.substring(0, i) + "." + raw.substring(i + 1);
+		int lastDot = raw.lastIndexOf('.');
+		int lastComma = raw.lastIndexOf(',');
+		int lastSep = Math.max(lastDot, lastComma);
+		if (lastSep != -1) {
+			int digitsAfter = raw.length() - lastSep - 1;
+			if (digitsAfter > 0 && digitsAfter <= 2) {
+				String intPart = raw.substring(0, lastSep).replaceAll("[.,]", "");
+				String fracPart = raw.substring(lastSep + 1).replaceAll("[.,]", "");
+				raw = intPart + "." + fracPart;
+			} else {
+				raw = raw.replaceAll("[.,]", "");
+			}
+		} else {
+			raw = raw.replaceAll("[.,]", "");
 		}
-		raw = raw.replace(",", "");
 		try {
 			double base = Double.parseDouble(raw);
 			return base * multiplier;
 		} catch (NumberFormatException e) {
-			return -1;
+			String digitsOnly = raw.replaceAll("\\D+", "");
+			if (digitsOnly.isEmpty()) return -1;
+			try {
+				double base = Double.parseDouble(digitsOnly);
+				return base * multiplier;
+			} catch (NumberFormatException ex) {
+				return -1;
+			}
 		}
 	}
 

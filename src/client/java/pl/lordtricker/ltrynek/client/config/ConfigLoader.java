@@ -40,7 +40,6 @@ public class ConfigLoader {
                 if (config == null) {
                     config = createDefaultConfig();
                 }
-                // Ensure default for new fields
                 if (config.adsEnabled == null) {
                     config.adsEnabled = true;
                     // Persist the new default into the main config file
@@ -182,9 +181,9 @@ public class ConfigLoader {
         cfg.servers.add(server2);
 
         ServerEntry server3 = new ServerEntry();
-        server3.domains = List.of("rapy.pl");
+        server3.domains = List.of("rapy.pl", "rapy.gg", "rapysmp.pl", "jjsmp.pl");
         server3.profileName = "rapy";
-        server3.loreRegex = "(?i).*Cena.*?\\$?([\\d.,]+(?:mld|m|k)?).*";
+        server3.loreRegex = "(?i).*Cena\\s*:?\\s*(?:\\$\\s*)?((?:\\d{1,3}(?:[\\s\\u00A0.,]\\d{3})*|\\d+)(?:mld|m|k)?)(?:\\s*\\$)?.*";
         server3.highlightColor = "#00FF33";
         server3.highlightColorStack = "#FFAB00";
         server3.miniAlarmSound = "minecraft:ui.button.click";
