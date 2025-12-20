@@ -6,5 +6,4 @@ public class PriceEntry {
     public String material;
     public String enchants;
     public double maxPrice;
-    public String enchants;
 }

@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/util/Messages.java
 package pl.lordtricker.ltrynek.core.util;
-========
-package pl.lordtricker.ltrynek.client.util;
->>>>>>>> d541205 (Big update: market analyzer, price formatter, sounds alert):src/client/java/pl/lordtricker/ltrynek/client/util/Messages.java
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
