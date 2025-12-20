@@ -15,7 +15,7 @@ public class ToggleScanner {
         toggleScanningKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "Włączenie podświetlenia itemów",
                 GLFW.GLFW_KEY_R,
-                "LT-Mods binds"
+                KeyBinding.Category.MISC
         ));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
