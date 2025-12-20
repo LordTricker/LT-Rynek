@@ -1,9 +1,9 @@
-package pl.lordtricker.ltrynek.client.config;
+package pl.lordtricker.ltrynek.core.config;
 
 public class PriceEntry {
     public String name;
     public String lore;
     public String material;
-    public double maxPrice;
     public String enchants;
+    public double maxPrice;
 }

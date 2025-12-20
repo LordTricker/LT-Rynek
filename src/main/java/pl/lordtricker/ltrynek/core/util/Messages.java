@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client.util;
+package pl.lordtricker.ltrynek.core.util;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
@@ -7,7 +7,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Messages {
     private static final Map<String, List<String>> messages = new HashMap<>();
@@ -28,9 +31,6 @@ public class Messages {
         }
     }
 
-    /**
-     * Zwraca wszystkie linie komunikatu połączone znakiem nowej linii.
-     */
     public static String get(String key) {
         List<String> lines = messages.get(key);
         if (lines == null) {
@@ -39,9 +39,6 @@ public class Messages {
         return String.join("\n", lines);
     }
 
-    /**
-     * Formatowanie placeholderów. Zastępuje %placeholder% wartościami w mapie.
-     */
     public static String format(String key, Map<String, String> placeholders) {
         List<String> lines = messages.get(key);
         if (lines == null) {

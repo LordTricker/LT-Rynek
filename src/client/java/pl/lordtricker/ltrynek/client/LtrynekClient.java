@@ -2,17 +2,21 @@ package pl.lordtricker.ltrynek.client;
 
 import pl.lordtricker.ltrynek.client.command.ClientCommandRegistration;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
-import pl.lordtricker.ltrynek.client.config.PriceEntry;
-import pl.lordtricker.ltrynek.client.config.ServerEntry;
-import pl.lordtricker.ltrynek.client.config.ServersConfig;
-import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
+import pl.lordtricker.ltrynek.core.config.PriceEntry;
+import pl.lordtricker.ltrynek.core.config.ServerEntry;
+import pl.lordtricker.ltrynek.core.config.ServersConfig;
+import pl.lordtricker.ltrynek.core.manager.ClientPriceListManager;
+import pl.lordtricker.ltrynek.core.manager.ClientSearchListManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.text.Text;
 import pl.lordtricker.ltrynek.client.util.ColorUtils;
-import pl.lordtricker.ltrynek.client.util.Messages;
-import pl.lordtricker.ltrynek.client.util.RemoteAdConfig;
+import pl.lordtricker.ltrynek.core.util.Messages;
+import pl.lordtricker.ltrynek.core.util.RemoteAdConfig;
+import pl.lordtricker.ltrynek.client.util.SearchAutomationController;
 
 import java.util.Map;
 
@@ -27,6 +31,17 @@ public class LtrynekClient implements ClientModInitializer {
 
         // Preload remote ad config (server name/address) asynchronously
         RemoteAdConfig.preloadAsync();
+
+		ClientSearchListManager.setExpiryHandler(() -> {
+			MinecraftClient client = MinecraftClient.getInstance();
+			client.execute(() -> {
+				if (client.player != null) {
+					client.player.sendMessage(Text.literal(Messages.get("command.searchlist.expired")), false);
+				}
+			});
+		});
+
+		ClientTickEvents.END_CLIENT_TICK.register(client -> SearchAutomationController.onClientTick());
 
 		for (ServerEntry entry : serversConfig.servers) {
 			ClientPriceListManager.setActiveProfile(entry.profileName);

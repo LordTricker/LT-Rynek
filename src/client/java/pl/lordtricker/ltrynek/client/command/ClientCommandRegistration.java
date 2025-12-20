@@ -1,26 +1,26 @@
 package pl.lordtricker.ltrynek.client.command;
 
 import pl.lordtricker.ltrynek.client.keybinding.ToggleScanner;
-import pl.lordtricker.ltrynek.client.util.ColorUtils;
 import pl.lordtricker.ltrynek.client.LtrynekClient;
-import pl.lordtricker.ltrynek.client.util.CompositeKeyUtil;
-import pl.lordtricker.ltrynek.client.util.Messages;
+import pl.lordtricker.ltrynek.client.util.SearchAutomationController;
+import pl.lordtricker.ltrynek.core.util.CompositeKeyUtil;
+import pl.lordtricker.ltrynek.core.util.Messages;
 import pl.lordtricker.ltrynek.client.config.ConfigLoader;
-import pl.lordtricker.ltrynek.client.config.PriceEntry;
-import pl.lordtricker.ltrynek.client.config.ServerEntry;
-import pl.lordtricker.ltrynek.client.manager.ClientPriceListManager;
-import pl.lordtricker.ltrynek.client.manager.ClientSearchListManager;
-import pl.lordtricker.ltrynek.client.util.PriceFormatter;
+import pl.lordtricker.ltrynek.core.config.PriceEntry;
+import pl.lordtricker.ltrynek.core.config.ServerEntry;
+import pl.lordtricker.ltrynek.core.manager.ClientPriceListManager;
+import pl.lordtricker.ltrynek.core.manager.ClientSearchListManager;
+import pl.lordtricker.ltrynek.core.util.PriceFormatter;
+import pl.lordtricker.ltrynek.core.util.SearchSummaryBuilder;
 import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.text.ClickEvent;
-import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import static pl.lordtricker.ltrynek.client.config.ConfigLoader.saveAllConfigs;
 
@@ -39,19 +39,19 @@ public class ClientCommandRegistration {
     ) {
         dispatcher.register(
                 ClientCommandManager.literal("ltr")
-                        // /ltr
                         .executes(ctx -> {
                             String activeProfile = ClientPriceListManager.getActiveProfile();
                             String message = Messages.format("mod.info", Map.of("profile", activeProfile));
-                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(message));
+                            ctx.getSource().sendFeedback(CommandUi.colored(message));
                             return 1;
                         })
                         .then(ClientCommandManager.literal("scan")
                                 .executes(ctx -> {
                                     ToggleScanner.scanningEnabled = !ToggleScanner.scanningEnabled;
-                                    String msgKey = ToggleScanner.scanningEnabled ? "command.scanner.toggle.on" : "command.scanner.toggle.off";
-                                    String msg = Messages.get(msgKey);
-                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                    String msgKey = ToggleScanner.scanningEnabled
+                                            ? "command.scanner.toggle.on"
+                                            : "command.scanner.toggle.off";
+                                    ctx.getSource().sendFeedback(CommandUi.colored(Messages.get(msgKey)));
                                     return 1;
                                 })
                         )
@@ -59,8 +59,7 @@ public class ClientCommandRegistration {
                                 .executes(ctx -> {
                                     String allProfiles = ClientPriceListManager.listProfiles();
                                     String[] profiles = allProfiles.split(",\\s*");
-                                    String headerStr = Messages.get("command.profiles.header");
-                                    MutableText finalText = (MutableText) ColorUtils.translateColorCodes(headerStr);
+                                    MutableText finalText = CommandUi.colored(Messages.get("command.profiles.header"));
                                     finalText.append(Text.literal("\n"));
 
                                     String activeProfile = ClientPriceListManager.getActiveProfile();
@@ -69,20 +68,17 @@ public class ClientCommandRegistration {
                                         String lineTemplate;
                                         if (trimmedProfile.equals(activeProfile)) {
                                             lineTemplate = Messages.format("profile.picked.line", Map.of("profile", trimmedProfile));
+                                            finalText.append(CommandUi.colored(lineTemplate));
                                         } else {
                                             lineTemplate = Messages.format("profile.available.line", Map.of("profile", trimmedProfile));
+                                            MutableText lineText = CommandUi.clickable(
+                                                    lineTemplate,
+                                                    ClickEvent.Action.RUN_COMMAND,
+                                                    "/ltr profile " + trimmedProfile,
+                                                    "Kliknij, aby zmienic profil na " + trimmedProfile);
+                                            finalText.append(lineText);
                                         }
-                                        MutableText lineText = (MutableText) ColorUtils.translateColorCodes(lineTemplate);
-
-                                        if (!trimmedProfile.equals(activeProfile)) {
-                                            Style clickableStyle = Style.EMPTY
-                                                    .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/ltr profile " + trimmedProfile))
-                                                    .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
-                                                            Text.literal("Kliknij, aby zmienić profil na " + trimmedProfile)));
-                                            lineText.setStyle(clickableStyle);
-                                        }
-
-                                        finalText.append(lineText).append(Text.literal("\n"));
+                                        finalText.append(Text.literal("\n"));
                                     }
                                     ctx.getSource().sendFeedback(finalText);
                                     return 1;
@@ -94,31 +90,15 @@ public class ClientCommandRegistration {
                                             String profile = StringArgumentType.getString(ctx, "profile");
                                             ClientPriceListManager.setActiveProfile(profile);
                                             String msg = Messages.format("command.profile.change", Map.of("profile", profile));
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ctx.getSource().sendFeedback(CommandUi.colored(msg));
                                             return 1;
                                         })
                                 )
                         )
-                        // /ltr add <maxPrice> <itemName>
                         .then(ClientCommandManager.literal("add")
                                 .then(ClientCommandManager.argument("maxPrice", StringArgumentType.word())
                                         .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
-                                                .suggests((context, builder) -> {
-                                                    String remaining = builder.getRemaining().toLowerCase();
-                                                    if (remaining.startsWith("mc:")) {
-                                                        remaining = "minecraft:" + remaining.substring(3);
-                                                    }
-                                                    if (remaining.contains("minecraft:")) {
-                                                        var allItemIds = net.minecraft.registry.Registries.ITEM.getIds();
-                                                        for (var itemId : allItemIds) {
-                                                            String asString = itemId.toString();
-                                                            if (asString.contains(remaining)) {
-                                                                builder.suggest(asString);
-                                                            }
-                                                        }
-                                                    }
-                                                    return builder.buildFuture();
-                                                })
+                                                .suggests((context, builder) -> CommandUi.suggestItemIds(builder))
                                                 .executes(ctx -> {
                                                     String maxPriceStr = StringArgumentType.getString(ctx, "maxPrice");
                                                     double parsedPrice = PriceFormatter.parsePrice(maxPriceStr);
@@ -142,14 +122,13 @@ public class ClientCommandRegistration {
                                                             "profile", activeProfile
                                                     ));
 
-                                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                    ctx.getSource().sendFeedback(CommandUi.colored(msg));
                                                     syncMemoryToConfig();
                                                     return 1;
                                                 })
                                         )
                                 )
                         )
-                        // /ltr remove <itemName>
                         .then(ClientCommandManager.literal("remove")
                                 .then(ClientCommandManager.argument("itemName", StringArgumentType.greedyString())
                                         .executes(ctx -> {
@@ -162,13 +141,12 @@ public class ClientCommandRegistration {
                                                     "item", friendly,
                                                     "profile", activeProfile
                                             ));
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ctx.getSource().sendFeedback(CommandUi.colored(msg));
                                             syncMemoryToConfig();
                                             return 1;
                                         })
                                 )
                         )
-                        // /ltr list
                         .then(ClientCommandManager.literal("list")
                                 .executes(ctx -> {
                                     String activeProfile = ClientPriceListManager.getActiveProfile();
@@ -181,30 +159,23 @@ public class ClientCommandRegistration {
                                             String friendlyName = CompositeKeyUtil.getFriendlyName(compositeKey);
                                             String priceStr = PriceFormatter.formatPrice(pe.maxPrice);
 
-                                            // Ikona edycji
                                             String editIconStr = Messages.get("pricelist.icon.edit");
-                                            MutableText editIcon = (MutableText) ColorUtils.translateColorCodes(editIconStr);
-                                            editIcon.setStyle(
-                                                    Style.EMPTY.withClickEvent(new ClickEvent(
-                                                                    ClickEvent.Action.SUGGEST_COMMAND,
-                                                                    "/ltr add " + priceStr + " " + friendlyName))
-                                                            .withHoverEvent(new HoverEvent(
-                                                                    HoverEvent.Action.SHOW_TEXT,
-                                                                    Text.literal("Kliknij aby zedytować " + friendlyName))));
+                                            MutableText editIcon = CommandUi.clickable(
+                                                    editIconStr,
+                                                    ClickEvent.Action.SUGGEST_COMMAND,
+                                                    "/ltr add " + priceStr + " " + friendlyName,
+                                                    "Kliknij aby zedytowac " + friendlyName);
 
-                                            // Ikona usuwania
                                             String removeIconStr = Messages.get("pricelist.icon.remove");
-                                            MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
-                                            removeIcon.setStyle(
-                                                    Style.EMPTY.withClickEvent(new ClickEvent(
-                                                                    ClickEvent.Action.RUN_COMMAND,
-                                                                    "/ltr remove " + friendlyName))
-                                                            .withHoverEvent(new HoverEvent(
-                                                                    HoverEvent.Action.SHOW_TEXT,
-                                                                    Text.literal("Kliknij aby usunąć " + friendlyName))));
+                                            MutableText removeIcon = CommandUi.clickable(
+                                                    removeIconStr,
+                                                    ClickEvent.Action.RUN_COMMAND,
+                                                    "/ltr remove " + friendlyName,
+                                                    "Kliknij aby usunac " + friendlyName);
 
-                                            String itemLineStr = Messages.format("pricelist.item_line", Map.of("item", friendlyName, "price", priceStr));
-                                            MutableText itemLine = (MutableText) ColorUtils.translateColorCodes(itemLineStr);
+                                            String itemLineStr = Messages.format("pricelist.item_line",
+                                                    Map.of("item", friendlyName, "price", priceStr));
+                                            MutableText itemLine = CommandUi.colored(itemLineStr);
                                             MutableText lineText = Text.empty()
                                                     .append(editIcon).append(Text.literal(" "))
                                                     .append(removeIcon).append(Text.literal(" "))
@@ -214,18 +185,14 @@ public class ClientCommandRegistration {
                                     }
 
                                     String msgHeader = Messages.format("command.list", Map.of("profile", activeProfile, "list", ""));
-                                    MutableText header = (MutableText) ColorUtils.translateColorCodes(msgHeader);
-                                    ctx.getSource().sendFeedback(header);
+                                    ctx.getSource().sendFeedback(CommandUi.colored(msgHeader));
                                     ctx.getSource().sendFeedback(finalText);
                                     return 1;
                                 })
                         )
-
-
                         .then(ClientCommandManager.literal("pomoc")
                                 .executes(ctx -> {
-                                    String msg = Messages.get("command.help");
-                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                    ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.help")));
                                     return 1;
                                 })
                         )
@@ -234,8 +201,7 @@ public class ClientCommandRegistration {
                                         .executes(ctx -> {
                                             syncMemoryToConfig();
                                             saveAllConfigs(LtrynekClient.serversConfig);
-                                            String msg = Messages.get("command.config.save.success");
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.config.save.success")));
                                             return 1;
                                         })
                                 )
@@ -244,8 +210,7 @@ public class ClientCommandRegistration {
                                             LtrynekClient.serversConfig = ConfigLoader.loadConfig();
                                             ClientPriceListManager.clearAllProfiles();
                                             reinitProfilesFromConfig();
-                                            String msg = Messages.get("command.config.reload.success");
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.config.reload.success")));
                                             return 1;
                                         })
                                 )
@@ -253,15 +218,16 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("sounds")
                                 .executes(ctx -> {
                                     boolean current = LtrynekClient.serversConfig.soundsEnabled;
-                                    String msg = current ? Messages.get("command.sounds.current_on") : Messages.get("command.sounds.current_off");
-                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                    String msg = current
+                                            ? Messages.get("command.sounds.current_on")
+                                            : Messages.get("command.sounds.current_off");
+                                    ctx.getSource().sendFeedback(CommandUi.colored(msg));
                                     return 1;
                                 })
                                 .then(ClientCommandManager.literal("on")
                                         .executes(ctx -> {
                                             LtrynekClient.serversConfig.soundsEnabled = true;
-                                            String msg = Messages.get("command.sounds.enabled");
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.sounds.enabled")));
                                             saveAllConfigs(LtrynekClient.serversConfig);
                                             return 1;
                                         })
@@ -269,8 +235,7 @@ public class ClientCommandRegistration {
                                 .then(ClientCommandManager.literal("off")
                                         .executes(ctx -> {
                                             LtrynekClient.serversConfig.soundsEnabled = false;
-                                            String msg = Messages.get("command.sounds.disabled");
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.sounds.disabled")));
                                             saveAllConfigs(LtrynekClient.serversConfig);
                                             return 1;
                                         })
@@ -279,27 +244,12 @@ public class ClientCommandRegistration {
                         .then(ClientCommandManager.literal("search")
                                 .then(ClientCommandManager.literal("add")
                                         .then(ClientCommandManager.argument("item", StringArgumentType.greedyString())
-                                                .suggests((context, builder) -> {
-                                                    String remaining = builder.getRemaining().toLowerCase();
-                                                    if (remaining.startsWith("mc:")) {
-                                                        remaining = "minecraft:" + remaining.substring(3);
-                                                    }
-                                                    if (remaining.contains("minecraft:")) {
-                                                        var allItemIds = net.minecraft.registry.Registries.ITEM.getIds();
-                                                        for (var itemId : allItemIds) {
-                                                            String asString = itemId.toString();
-                                                            if (asString.contains(remaining)) {
-                                                                builder.suggest(asString);
-                                                            }
-                                                        }
-                                                    }
-                                                    return builder.buildFuture();
-                                                })
+                                                .suggests((context, builder) -> CommandUi.suggestItemIds(builder))
                                                 .executes(ctx -> {
                                                     String rawItem = StringArgumentType.getString(ctx, "item");
                                                     ClientSearchListManager.addItem(rawItem);
                                                     String msg = Messages.format("command.searchlist.add", Map.of("item", rawItem));
-                                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                    ctx.getSource().sendFeedback(CommandUi.colored(msg));
                                                     return 1;
                                                 })
                                         )
@@ -312,45 +262,47 @@ public class ClientCommandRegistration {
                                                     String friendly = CompositeKeyUtil.getFriendlyName(
                                                             CompositeKeyUtil.createCompositeKey(rawItem));
                                                     String msg = Messages.format("command.searchlist.remove", Map.of("item", friendly));
-                                                    ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                                    ctx.getSource().sendFeedback(CommandUi.colored(msg));
                                                     return 1;
                                                 })
                                         )
                                 )
                                 .then(ClientCommandManager.literal("start")
                                         .executes(ctx -> {
-                                            ClientSearchListManager.startSearch();
-                                            String msg = Messages.get("command.searchlist.start");
-                                            ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(msg));
+                                            SearchAutomationController.start(-1);
+                                            ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.searchlist.start")));
                                             return 1;
                                         })
+                                        .then(ClientCommandManager.argument("pages", IntegerArgumentType.integer(1))
+                                                .executes(ctx -> {
+                                                    int pages = IntegerArgumentType.getInteger(ctx, "pages");
+                                                    SearchAutomationController.start(pages);
+                                                    ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.searchlist.start")));
+                                                    return 1;
+                                                })
+                                        )
                                 )
                                 .then(ClientCommandManager.literal("stop")
                                         .executes(ctx -> {
-                                            ClientSearchListManager.stopSearch();
-                                            List<String> searchItems = ClientSearchListManager.getSearchList();
-                                            if (searchItems.isEmpty()) {
-                                                String emptyMsg = Messages.get("command.searchlist.list.empty");
-                                                ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(emptyMsg));
-                                                return 1;
+                                            SearchAutomationController.cancel();
+                                            var reason = SearchAutomationController.consumeLastFinishReason();
+                                            int pages = SearchAutomationController.consumeLastPagesScanned();
+                                            String reasonLine = null;
+                                            if (reason != null) {
+                                                switch (reason) {
+                                                    case MANUAL -> reasonLine = Messages.get("command.searchlist.stop.reason.manual");
+                                                    case LIMIT_REACHED -> reasonLine = Messages.get("command.searchlist.stop.reason.limit");
+                                                    case NO_NEXT_PAGE -> reasonLine = Messages.get("command.searchlist.stop.reason.no_next");
+                                                    case NO_GUI -> reasonLine = Messages.get("command.searchlist.stop.reason.no_gui");
+                                                }
                                             }
+                                            List<String> lines = SearchSummaryBuilder.buildStopSummary(reasonLine, pages);
                                             MutableText finalText = Text.empty();
-                                            String headerRaw = Messages.get("command.searchlist.stop.header");
-                                            finalText.append(ColorUtils.translateColorCodes(headerRaw)).append(Text.literal("\n"));
-                                            for (String compositeKey : searchItems) {
-                                                ClientSearchListManager.Stats stats = ClientSearchListManager.getStats(compositeKey);
-                                                if (stats == null || stats.getCount() == 0) continue;
-                                                String lineRaw = Messages.format("command.searchlist.stop.line", Map.of(
-                                                        "item", CompositeKeyUtil.getFriendlyName(compositeKey),
-                                                        "count", String.valueOf(stats.getCount()),
-                                                        "min", PriceFormatter.formatPrice(stats.getMin()),
-                                                        "max", PriceFormatter.formatPrice(stats.getMax()),
-                                                        "avg", PriceFormatter.formatPrice(stats.getAverage()),
-                                                        "median", PriceFormatter.formatPrice(stats.getMedian()),
-                                                        "quartile1", PriceFormatter.formatPrice(stats.getQuartile1()),
-                                                        "quartile3", PriceFormatter.formatPrice(stats.getQuartile3())
-                                                ));
-                                                finalText.append(ColorUtils.translateColorCodes(lineRaw)).append(Text.literal("\n"));
+                                            for (int i = 0; i < lines.size(); i++) {
+                                                finalText.append(CommandUi.colored(lines.get(i)));
+                                                if (i < lines.size() - 1) {
+                                                    finalText.append(Text.literal("\n"));
+                                                }
                                             }
                                             ctx.getSource().sendFeedback(finalText);
                                             return 1;
@@ -360,38 +312,30 @@ public class ClientCommandRegistration {
                                         .executes(ctx -> {
                                             List<String> searchItems = ClientSearchListManager.getSearchList();
                                             if (searchItems.isEmpty()) {
-                                                String emptyMsg = Messages.get("command.searchlist.list.empty");
-                                                ctx.getSource().sendFeedback(ColorUtils.translateColorCodes(emptyMsg));
+                                                ctx.getSource().sendFeedback(CommandUi.colored(Messages.get("command.searchlist.list.empty")));
                                                 return 1;
                                             }
-                                            String header = Messages.get("command.searchlist.list.header");
-                                            MutableText finalText = (MutableText) ColorUtils.translateColorCodes(header);
+                                            MutableText finalText = CommandUi.colored(Messages.get("command.searchlist.list.header"));
                                             finalText.append(Text.literal("\n"));
                                             for (String compositeKey : searchItems) {
                                                 String friendly = CompositeKeyUtil.getFriendlyName(compositeKey);
-                                                MutableText friendlyText = Text.literal(friendly);
-
                                                 String removeIconStr = Messages.get("pricelist.icon.remove");
-                                                MutableText removeIcon = (MutableText) ColorUtils.translateColorCodes(removeIconStr);
-                                                removeIcon.setStyle(
-                                                        Style.EMPTY.withClickEvent(new ClickEvent(
-                                                                        ClickEvent.Action.RUN_COMMAND,
-                                                                        "/ltr search remove " + friendly))
-                                                                .withHoverEvent(new HoverEvent(
-                                                                        HoverEvent.Action.SHOW_TEXT,
-                                                                        Text.literal(Messages.get("command.searchlist.list.remove.hover")))));
+                                                MutableText removeIcon = CommandUi.clickable(
+                                                        removeIconStr,
+                                                        ClickEvent.Action.RUN_COMMAND,
+                                                        "/ltr search remove " + friendly,
+                                                        Messages.get("command.searchlist.list.remove.hover"));
 
                                                 MutableText lineText = Text.empty()
                                                         .append(removeIcon)
                                                         .append(Text.literal(" "))
-                                                        .append(friendlyText);
+                                                        .append(Text.literal(friendly));
                                                 finalText.append(lineText).append(Text.literal("\n"));
                                             }
                                             ctx.getSource().sendFeedback(finalText);
                                             return 1;
                                         })
                                 )
-
                         )
         );
     }
@@ -461,14 +405,4 @@ public class ClientCommandRegistration {
         return null;
     }
 
-    private static ServerEntry findServerEntryByProfile(String profileName) {
-        if (LtrynekClient.serversConfig == null || LtrynekClient.serversConfig.servers == null)
-            return null;
-        for (ServerEntry entry : LtrynekClient.serversConfig.servers) {
-            if (entry.profileName.equalsIgnoreCase(profileName)) {
-                return entry;
-            }
-        }
-        return null;
-    }
 }

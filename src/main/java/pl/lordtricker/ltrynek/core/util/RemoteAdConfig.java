@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client.util;
+package pl.lordtricker.ltrynek.core.util;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -38,9 +38,7 @@ public final class RemoteAdConfig {
     }
 
     public static String serverAddress() {
-        // Before first successful fetch: do not inject anything
         if (!fetched) return null;
-        // After fetch: explicit null disables injection; blank treated as null
         return (cachedAddress != null && !cachedAddress.isBlank()) ? cachedAddress : null;
     }
 
@@ -77,7 +75,7 @@ public final class RemoteAdConfig {
 
                     if (hasAddr) {
                         if (addrIsNull) {
-                            cachedAddress = null; // disable injection
+                            cachedAddress = null;
                         } else {
                             String addr = obj.get("serverAddress").getAsString();
                             if (addr != null && !addr.isBlank()) cachedAddress = normalizeAddress(addr);

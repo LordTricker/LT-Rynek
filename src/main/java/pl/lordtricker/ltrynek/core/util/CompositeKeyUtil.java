@@ -1,6 +1,6 @@
-package pl.lordtricker.ltrynek.client.util;
+package pl.lordtricker.ltrynek.core.util;
 
-import pl.lordtricker.ltrynek.client.config.PriceEntry;
+import pl.lordtricker.ltrynek.core.config.PriceEntry;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -11,14 +11,6 @@ public class CompositeKeyUtil {
             "^(.*?)\\s*(?:\\(\\s*\\\"([^\\\"]+)\\\"\\s*\\))?\\s*(?:\\[\\s*\\\"([^\\\"]+)\\\"\\s*\\])?\\s*(?:\\{\\s*\\\"([^\\\"]+)\\\"\\s*\\})?\\s*$"
     );
 
-    /**
-     * Tworzy composite key na podstawie ciągu wejściowego.
-     * Obsługuje formaty:
-     * - Prosty materiał: "minecraft:diamond_sword" → "minecraft:diamond_sword|||"
-     * - Materiał w nawiasach kwadratowych z cudzysłowami:
-     *    ["minecraft:diamond_sword"] → "minecraft:diamond_sword|||"
-     * - Pełny format: baseName("lore")[material]{"enchants"}
-     */
     public static String createCompositeKey(String rawInput) {
         String normalized = rawInput.trim();
         if (normalized.startsWith("[\"") && normalized.endsWith("\"]")) {
@@ -54,11 +46,6 @@ public class CompositeKeyUtil {
         return (baseName + "|" + lore + "|" + material + "|" + enchants).toLowerCase();
     }
 
-    /**
-     * Generuje przyjazną nazwę w formacie:
-     * baseName("lore")[material]{"enchants"}
-     * – z cudzysłowami wokół parametrów, jeśli są podane.
-     */
     public static String getFriendlyName(String compositeKey) {
         String[] parts = compositeKey.split("\\|", -1);
         String baseName = parts[0];
@@ -85,9 +72,6 @@ public class CompositeKeyUtil {
         return "";
     }
 
-    /**
-     * Tworzy composite key z obiektu PriceEntry.
-     */
     public static String getCompositeKeyFromEntry(PriceEntry entry) {
         return (entry.name + "|" +
                 (entry.lore == null ? "" : entry.lore) + "|" +

@@ -2,7 +2,8 @@ package pl.lordtricker.ltrynek.client.util;
 
 import net.minecraft.client.network.ServerInfo;
 import net.minecraft.client.option.ServerList;
-import pl.lordtricker.ltrynek.client.config.ServersConfig;
+import pl.lordtricker.ltrynek.core.config.ServersConfig;
+import pl.lordtricker.ltrynek.core.util.RemoteAdConfig;
 import pl.lordtricker.ltrynek.client.mixin.ServerListAccessor;
 
 import java.util.List;

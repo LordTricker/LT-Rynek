@@ -1,9 +1,6 @@
-package pl.lordtricker.ltrynek.client.manager;
+package pl.lordtricker.ltrynek.core.manager;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import pl.lordtricker.ltrynek.client.util.CompositeKeyUtil;
-import pl.lordtricker.ltrynek.client.util.Messages;
+import pl.lordtricker.ltrynek.core.util.CompositeKeyUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -15,7 +12,7 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import static pl.lordtricker.ltrynek.client.util.CompositeKeyUtil.createCompositeKey;
+import static pl.lordtricker.ltrynek.core.util.CompositeKeyUtil.createCompositeKey;
 
 public class ClientSearchListManager {
     private static final List<String> searchList = new ArrayList<>();
@@ -23,10 +20,12 @@ public class ClientSearchListManager {
     private static boolean searchActive = false;
     private static Timer searchTimer = null;
     private static final Set<String> alreadyCountedSession = new HashSet<>();
+    private static Runnable expiryHandler = null;
 
-    /**
-     * Dodaje nowy przedmiot do listy wyszukiwania (w formacie: name(lore)[material]{enchants}).
-     */
+    public static void setExpiryHandler(Runnable handler) {
+        expiryHandler = handler;
+    }
+
     public static void addItem(String rawItem) {
         String compositeKey = createCompositeKey(rawItem);
         if (!searchList.contains(compositeKey)) {
@@ -59,13 +58,11 @@ public class ClientSearchListManager {
             @Override
             public void run() {
                 stopSearch();
-                MinecraftClient.getInstance().execute(() -> {
-                    if (MinecraftClient.getInstance().player != null) {
-                        MinecraftClient.getInstance().player.sendMessage(Text.literal(Messages.get("command.searchlist.expired")), false);
-                    }
-                });
+                if (expiryHandler != null) {
+                    expiryHandler.run();
+                }
             }
-        }, 300_000); // 5 minut = 300000 ms
+        }, 300_000);
     }
 
     public static void stopSearch() {
@@ -80,9 +77,6 @@ public class ClientSearchListManager {
         return searchActive;
     }
 
-    /**
-     * Sprawdza, czy dany unikalny klucz (np. aukcja) został już zliczony w tej sesji.
-     */
     public static boolean isAlreadyCounted(String key) {
         return alreadyCountedSession.contains(key);
     }
@@ -91,9 +85,6 @@ public class ClientSearchListManager {
         alreadyCountedSession.add(key);
     }
 
-    /**
-     * Aktualizuje statystyki (cena/sztuka, ilość) dla podanego compositeKey.
-     */
     public static void updateStats(String compositeKey, double unitPrice, int quantity) {
         Stats s = statsMap.get(compositeKey);
         if (s == null) {
@@ -107,11 +98,6 @@ public class ClientSearchListManager {
         return statsMap.get(rawItem.toLowerCase());
     }
 
-    /**
-     * Pomocnicza metoda do sprawdzania, czy zeskanowany item pasuje do compositeKey z listy.
-     * Rozbijamy compositeKey na cztery części: name, lore, material, enchants.
-     * Na razie porównujemy tylko name, lore oraz material.
-     */
     public static boolean matchesSearchTerm(String compositeKey, String noColorName, List<String> loreLines, String materialId, String enchantments) {
         String[] parts = CompositeKeyUtil.splitCompositeKey(compositeKey);
         String baseName = parts[0];
@@ -150,7 +136,6 @@ public class ClientSearchListManager {
 
         return nameMatches && loreMatches && materialMatches && enchantMatches;
     }
-
 
     public static class Stats {
         private int count;

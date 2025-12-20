@@ -177,6 +177,21 @@
     "&8[&3L&bT &fRynek&8] &aZakończono &7zliczanie wyswietlonych przedmiotow",
     "&8[&3L&bT &fRynek&8] &7Oto co udalo mi sie ustalic:"
   ],
+  "command.searchlist.stop.pages": [
+    "&8[&3L&bT &fRynek&8] &7Sprawdzone strony: &f%pages%"
+  ],
+  "command.searchlist.stop.reason.limit": [
+    "&8[&3L&bT &fRynek&8] &7Powod: &fosiagnieto limit stron"
+  ],
+  "command.searchlist.stop.reason.no_next": [
+    "&8[&3L&bT &fRynek&8] &7Powod: &fbrak kolejnej strony"
+  ],
+  "command.searchlist.stop.reason.no_gui": [
+    "&8[&3L&bT &fRynek&8] &7Powod: &fnie udalo sie otworzyc rynku"
+  ],
+  "command.searchlist.stop.reason.manual": [
+    "&8[&3L&bT &fRynek&8] &7Powod: &freczne zatrzymanie"
+  ],
   "command.searchlist.stop.line": [
     "&8- &f%item%&8(&b%count%&8):",
     "   &fmin: &a%min%&7, &fmax: &2%max%&7, &fśrednia: &e%avg%",

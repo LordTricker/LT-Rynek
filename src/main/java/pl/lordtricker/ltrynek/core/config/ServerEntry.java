@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client.config;
+package pl.lordtricker.ltrynek.core.config;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -14,8 +14,16 @@ public class ServerEntry {
     public String miniAlarmSound = "minecraft:ui.button.click";
     public String miniAlarmSoundStack = "minecraft:entity.player.levelup";
 
+    public List<String> marketCommands = new ArrayList<>();
+    public String marketGuiTitle;
+    public String marketNextPageName;
+    public String marketNextPageMaterial;
+    public Integer marketNextPageSlot;
+    public Integer marketOpenDelayMs;
+    public Integer marketNextDelayMs;
+    public Integer marketCloseDelayMs;
+
     public List<PriceEntry> prices = new ArrayList<>();
 
     public transient Path sourceFile;
-
 }

@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client.util;
+package pl.lordtricker.ltrynek.core.util;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -49,7 +49,7 @@ public class EnchantMapper {
         pre120Map.put("thorn", "thorn");
         pre120Map.put("thorns", "thorn");
 
-        // Post 1.21 (nowsze wersje) – używamy tych samych skrótów
+        // Post 1.21 (newer versions) - use the same aliases.
         post121Map.put("prot", "prot");
         post121Map.put("protection", "prot");
 
@@ -92,14 +92,6 @@ public class EnchantMapper {
         post121Map.put("thorns", "thorn");
     }
 
-    /**
-     * Mapuje skróconą nazwę enchantu (może zawierać numer poziomu, np. "minecraft:protection2")
-     * do właściwego aliasu. Jeśli nazwa zawiera prefiks "minecraft:" – zostanie on usunięty.
-     *
-     * @param shortName skrócona nazwa enchantu z poziomem
-     * @param post121   true dla wersji 1.21+, false dla starszych
-     * @return skrócony alias enchantu z dołączonym poziomem (np. "prot2") lub "unknown", jeśli brak mapowania
-     */
     public static String mapEnchant(String shortName, boolean post121) {
         String baseName = shortName.toLowerCase();
         if (baseName.startsWith("minecraft:")) {

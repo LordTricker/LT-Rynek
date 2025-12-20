@@ -1,4 +1,4 @@
-package pl.lordtricker.ltrynek.client.util;
+package pl.lordtricker.ltrynek.core.util;
 
 public class PriceFormatter {
     public static double parsePrice(String raw) {
@@ -27,15 +27,6 @@ public class PriceFormatter {
         }
     }
 
-    /**
-     * Formatuje liczbę w "krótkim" formacie z przyrostkami k/m:
-     * - >= 1_000_000 -> "xx.xxM"
-     * - >= 1_000 -> "xx.xxK"
-     * - < 1_000 -> zwykły format
-     *
-     * Zwraca np. "1.59k", "12.50m", "999.00" (z zaokrągleniem do 2 miejsc).
-     * Zmodyfikuj w razie potrzeby (np. usuń .00, itp.).
-     */
     public static String formatPrice(double value) {
         double absVal = Math.abs(value);
         String suffix = "";
