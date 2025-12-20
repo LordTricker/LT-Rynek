@@ -1,8 +1,4 @@
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
 package pl.lordtricker.ltrynek.core.manager;
-========
-package pl.lordtricker.ltrynek.client.manager;
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
 
 import pl.lordtricker.ltrynek.core.config.PriceEntry;
 import pl.lordtricker.ltrynek.core.util.CompositeKeyUtil;
@@ -14,13 +10,6 @@ import java.util.Map;
 
 public class ClientPriceListManager {
 
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
-========
-    /**
-     * Struktura: profile -> lista wpisów typu PriceEntry.
-     * Każdy wpis zawiera: name, lore, material, enchants, maxPrice.
-     */
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
     private static final Map<String, List<PriceEntry>> priceLists = new HashMap<>();
 
     private static final Map<String, Map<String, String>> customLookup = new HashMap<>();
@@ -44,12 +33,6 @@ public class ClientPriceListManager {
         return String.join(", ", priceLists.keySet());
     }
 
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
-========
-    /**
-     * Dodaje lub ustawia wpis (name, lore, material, enchants, maxPrice) w aktywnym profilu.
-     */
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
     public static void addPriceEntry(PriceEntry entry) {
         String compositeKey = CompositeKeyUtil.getCompositeKeyFromEntry(entry);
 
@@ -92,7 +75,6 @@ public class ClientPriceListManager {
         }
     }
 
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
     public static PriceEntry findMatchingPriceEntry(String noColorName, List<String> loreLines, String materialId, String enchantments) {
         List<PriceEntry> entries = priceLists.get(activeProfile);
         if (entries == null) return null;
@@ -104,15 +86,6 @@ public class ClientPriceListManager {
         String lowerMaterialId = materialId.toLowerCase();
         String lowerEnchantments = enchantments == null ? "" : enchantments.toLowerCase();
 
-========
-    /**
-     * Wyszukuje wpis PriceEntry, który pasuje do przekazanych parametrów (name, lore, material).
-     * Jeśli chcesz uwzględnić enchanty, zmodyfikuj logikę porównania.
-     */
-    public static PriceEntry findMatchingPriceEntry(String noColorName, List<String> loreLines, String materialId, String enchantments) {
-        List<PriceEntry> entries = priceLists.get(activeProfile);
-        if (entries == null) return null;
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
         for (PriceEntry pe : entries) {
             int score = 0;
 
@@ -124,16 +97,9 @@ public class ClientPriceListManager {
             }
 
             if (!pe.name.isEmpty()) {
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
                 String lowerEntryName = pe.name.toLowerCase();
                 boolean nameMatches = lowerName.contains(lowerEntryName) || lowerMaterialId.contains(lowerEntryName);
                 if (!nameMatches) {
-========
-                String lowerName = noColorName.toLowerCase();
-                String lowerMaterial = materialId.toLowerCase();
-                String lowerEntryName = pe.name.toLowerCase();
-                if (!lowerName.contains(lowerEntryName) && !lowerMaterial.contains(lowerEntryName)) {
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
                     continue;
                 }
                 score += Math.min(500, lowerEntryName.length());
@@ -167,28 +133,10 @@ public class ClientPriceListManager {
                 bestScore = score;
                 best = pe;
             }
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
-========
-            if (pe.enchants != null && !pe.enchants.isEmpty()) {
-                if (enchantments == null || enchantments.isEmpty() ||
-                        !enchantments.toLowerCase().contains(pe.enchants.toLowerCase())) {
-                    continue;
-                }
-            }
-            return pe;
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
         }
         return best;
     }
 
-<<<<<<<< HEAD:src/main/java/pl/lordtricker/ltrynek/core/manager/ClientPriceListManager.java
-========
-
-
-    /**
-     * Daje dostęp do wszystkich profili (przydatne np. do zapisywania w configu).
-     */
->>>>>>>> 86d6843 (Big update to version 1.4.0):src/client/java/pl/lordtricker/ltrynek/client/manager/ClientPriceListManager.java
     public static Map<String, List<PriceEntry>> getAllProfiles() {
         return priceLists;
     }
