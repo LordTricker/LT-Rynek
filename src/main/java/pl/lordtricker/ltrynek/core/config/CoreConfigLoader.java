@@ -139,6 +139,14 @@ public final class CoreConfigLoader {
         server1.highlightColorStack = "#FFAB00";
         server1.miniAlarmSound = "minecraft:ui.button.click";
         server1.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+        server1.marketCommands = List.of("/ah otworz", "/rynek otworz");
+        server1.marketGuiTitle = "Rynek";
+        server1.marketNextPageName = "Nastepna strona";
+        server1.marketNextPageMaterial = "minecraft:tipped_arrow";
+        server1.marketNextPageSlot = 53;
+        server1.marketOpenDelayMs = 500;
+        server1.marketNextDelayMs = 40;
+        server1.marketCloseDelayMs = 500;
         applyDefaults(server1);
 
         PriceEntry pe1 = new PriceEntry();
@@ -156,6 +164,14 @@ public final class CoreConfigLoader {
         server2.highlightColorStack = "#FFAB00";
         server2.miniAlarmSound = "minecraft:ui.button.click";
         server2.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+        server2.marketCommands = List.of("/ah", "/rynek");
+        server2.marketGuiTitle = "Rynek";
+        server2.marketNextPageName = "Nastepna strona";
+        server2.marketNextPageMaterial = "minecraft:lime_dye";
+        server2.marketNextPageSlot = 50;
+        server2.marketOpenDelayMs = 500;
+        server2.marketNextDelayMs = 8;
+        server2.marketCloseDelayMs = 500;
         applyDefaults(server2);
 
         PriceEntry pe2 = new PriceEntry();
@@ -173,6 +189,14 @@ public final class CoreConfigLoader {
         server3.highlightColorStack = "#FFAB00";
         server3.miniAlarmSound = "minecraft:ui.button.click";
         server3.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+        server3.marketCommands = List.of("/ah", "/rynek");
+        server3.marketGuiTitle = "Market";
+        server3.marketNextPageName = "Nastepna strona";
+        server3.marketNextPageMaterial = "minecraft:arrow";
+        server3.marketNextPageSlot = 53;
+        server3.marketOpenDelayMs = 500;
+        server3.marketNextDelayMs = 8;
+        server3.marketCloseDelayMs = 500;
         applyDefaults(server3);
 
         PriceEntry pe3 = new PriceEntry();
@@ -190,6 +214,14 @@ public final class CoreConfigLoader {
         server4.highlightColorStack = "#FFAB00";
         server4.miniAlarmSound = "minecraft:ui.button.click";
         server4.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
+        server4.marketCommands = List.of("/ah", "/rynek");
+        server4.marketGuiTitle = "Rynek";
+        server4.marketNextPageName = "Nastepna";
+        server4.marketNextPageMaterial = "minecraft:green_terracotta";
+        server4.marketNextPageSlot = 50;
+        server4.marketOpenDelayMs = 500;
+        server4.marketNextDelayMs = 8;
+        server4.marketCloseDelayMs = 500;
         applyDefaults(server4);
 
         PriceEntry pe4 = new PriceEntry();
@@ -198,23 +230,6 @@ public final class CoreConfigLoader {
         server4.prices.add(pe4);
 
         cfg.servers.add(server4);
-
-        ServerEntry server5 = new ServerEntry();
-        server5.domains = List.of("n1mc.pl");
-        server5.profileName = "n1mc";
-        server5.loreRegex = "(?i).*Cena.*?([\\d.,]+(?:mld|m|k)?)\\$.*";
-        server5.highlightColor = "#00FF33";
-        server5.highlightColorStack = "#FFAB00";
-        server5.miniAlarmSound = "minecraft:ui.button.click";
-        server5.miniAlarmSoundStack = "minecraft:ui.toast.challenge_complete";
-        applyDefaults(server5);
-
-        PriceEntry pe5 = new PriceEntry();
-        pe5.name = "minecraft:emerald";
-        pe5.maxPrice = 200.0;
-        server5.prices.add(pe5);
-
-        cfg.servers.add(server5);
 
         return cfg;
     }
